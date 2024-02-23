@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  my_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/code
