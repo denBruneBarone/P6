@@ -8,6 +8,7 @@ P6 about drones
   - [Installing Requirements](#installing-requirements)
   - [Running the Main File Locally](#running-the-main-file-locally)
   - [Running Docker](#running-docker)
+  - [Data analysis](#data-analysis)
 - [Documentation](#documentation)
   - [Paper](#paper)
   - [Research](#research)
@@ -38,6 +39,13 @@ docker build -t project-name .
 docker run -p 8080:80 project-name
 ```
 
+### Data Analysis
+Data analysis is done through notebooks in Jupyter. 
+- Navigate to the appropriate folder, e.g. data-processing/exploratory-data-analysis
+- Run the code below to open the Jupyter notebook in that folder
+  ```bash
+  jupyter notebook
+  ```
 ## Documentation
 All documentation can be found on Overleaf
 -  #### [Paper](https://www.overleaf.com/project/65d3166bc47ab28de79ca37d)
