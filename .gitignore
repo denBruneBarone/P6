@@ -1,6 +1,6 @@
 #datasets.
 data/datasets/rodrigues/*
-!data/datasets/rodrigues/*
+!data/datasets/rodrigues/README.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
