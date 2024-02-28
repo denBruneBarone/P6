@@ -1,5 +1,5 @@
 # import unittest
-# from ..data_processing.exploratory_data_analysis.functions import read_csv
+# from ..data_processing.data_cleansing.functions import read_csv
 #
 #
 # class TestCsvRowCount(unittest.TestCase):
