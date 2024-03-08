@@ -1,12 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from data_processing import datapoints_summation
-from data_processing import trapeziod_integration
+from data_processing.energy_consumption import datapoints_summation, trapeziod_integration
 
 
 def read_csv():
-    url = '../data/datasets/rodrigues/flights.csv'
+    url = '../../data/datasets/rodrigues/flights.csv'
     data = pd.read_csv(url, sep=',')
     return data
 

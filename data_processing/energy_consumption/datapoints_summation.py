@@ -1,6 +1,3 @@
-import pandas as pd
-
-
 def calculate_energy_by_summing(data):
 
     # Calculate power consumption for each row
