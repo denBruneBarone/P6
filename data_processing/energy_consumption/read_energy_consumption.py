@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from data_processing.energy_consumption import datapoints_summation, trapeziod_integration
+from data_processing.energy_consumption.trapeziod_integration import trapezoidal_integration
 
 
 def read_csv():
@@ -36,7 +37,9 @@ def plot_stacked_chart(data_summing, data_integrated):
 
 
 # data_summing = datapoints_summation.calculate_energy_by_summing(read_csv())
-data_integrated = trapeziod_integration.integrate_flight_data(read_csv())
+# data_integrated = trapeziod_integration.integrate_flight_data(read_csv())
+data_integrated = trapeziod_integration.integrate_each_row_specific_flight_data(read_csv())
+data_integrated = trapeziod_integration.add_cumulative_column(data_integrated)
 
 print(f"CALCULATION ENERGY CONSUMPTION FOR ALL FLIGHTS")
 print("")
