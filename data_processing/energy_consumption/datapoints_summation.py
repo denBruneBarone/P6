@@ -17,3 +17,6 @@ def calculate_energy_by_summing(data):
             total_energy_wh = total_energy / 3600
         flight_energy[flight] = total_energy_wh
     return flight_energy
+
+
+

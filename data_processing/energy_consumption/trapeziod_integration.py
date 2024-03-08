@@ -30,13 +30,13 @@ def trapezoidal_integration(time_points, power_values):
 def integrate_flight_data(data):
     """Integrate power consumption for each flight and convert to watt-hours."""
     flight_energy = {}
-    grouped_data = data.groupby('flight')
+    grouped_data = data.groupby('flight') # already grouped by Vi in ml
     for flight, flight_data in grouped_data:
         time_points = flight_data['time'].values
         power_values = calculate_power(flight_data)
         interpolated_power, new_time_points = interpolate_power(time_points, power_values)
         total_energy = trapezoidal_integration(new_time_points, interpolated_power)
-        total_energy_wh = total_energy / 3600  # Convert joules to watt-hours
-        flight_energy[flight] = total_energy_wh
+        # total_energy_wh = total_energy / 3600  # Convert joules to watt-hours
+        flight_energy[flight] = total_energy
     return flight_energy
 
