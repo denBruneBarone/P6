@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from data_processing import datapoints_summing
+from data_processing import datapoints_summation
 from data_processing import trapeziod_integration
 
 
@@ -36,11 +36,27 @@ def plot_stacked_chart(data_summing, data_integrated):
     plt.show()
 
 
-data_summing = datapoints_summing.read_multiple_dataset()
-# data_summing = datapoints_summing.read_single_dataset()
+data_summing = datapoints_summation.calculate_energy_by_summing(read_csv())
+data_integrated = trapeziod_integration.integrate_flight_data(read_csv())
 
-data_integrated = trapeziod_integration.integrate_multiple_flight_data(read_csv())
-# data_integrated = trapeziod_integration.integrate_single_flight_data(read_csv())
+print(f"CALCULATION ENERGY CONSUMPTION FOR ALL FLIGHTS")
+print("")
 
+# Summation
+print("-----------------------------------------------")
+print("Calculate using summation")
+print("-----------------------------------------------")
+for key, value in data_summing.items():
+    print(f"Flight {key}: ", '%.2f' % value, 'wh', sep='')  # Using string concatenation
+print("-----------------------------------------------")
+print("")
 
-plot_stacked_chart(data_summing, data_integrated)
+# Integration
+print("-----------------------------------------------")
+print("Calculate using integration")
+print("-----------------------------------------------")
+for key, value in data_integrated.items():
+    print(f"Flight {key}: ", '%.2f' % value, 'wh', sep='')  # Using string concatenation
+print("-----------------------------------------------")
+print("")
+# plot_stacked_chart(data_summing, data_integrated)
