@@ -1,7 +1,7 @@
 import os
 from machine_learning.pre_processing import pre_process_and_split_data
 from machine_learning.prepare_for_training import organize_data
-from machine_learning.training import train_data
+from machine_learning.training import training
 
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
@@ -18,7 +18,7 @@ def train():
     test_data = organize_data(test_data)
 
     #training
-    train_data(train_data)
+    training(train_data)
 
 if __name__ == "__main__":
     train()

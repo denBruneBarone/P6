@@ -11,9 +11,29 @@ class TrainingDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, index):
-        sample = self.data.iloc[index].values
-        sample = torch.tensor(sample, dtype=torch.float)
-        return sample
+        sample = self.data[index]
+
+        # Extract features
+        payload = float(sample['payload'])
+        speed = float(sample['speed'])
+        flight = sample['flight']
+
+        # TODO: Probably do normalization before this!!!
+        sequential_data = sample['data']  # Assuming this is a DataFrame
+
+        # TODO: undersøg om vi vil bruge Time-Series Feature Extraction eller Temporal Aggregation osv. OBS: nok ikke, vi bruger LSTM.
+
+        # statisk input
+        input_tensor = torch.tensor([payload, speed], dtype=torch.float)
+
+        # sequentielt input
+        sequential_tensor = torch.tensor(sequential_data.values, dtype=torch.float)
+
+        # outout/target feature
+        target_tensor = torch.tensor(float(sample['power']),
+                                     dtype=torch.float)
+
+        return input_tensor, sequential_tensor, target_tensor
 
 
 # Takes df parameter
