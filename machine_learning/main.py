@@ -10,13 +10,15 @@ flights_processed = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_
 
 def train():
     input_file = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
-    train_df, val_df, test_df = pre_process_and_split_data(input_file)
-    print("Val_len:", len(val_df))
-    print("test_len:",len(test_df))
-    print("Train_len:", len(train_df))
+    train_data, val_data, test_data = pre_process_and_split_data(input_file)
 
     #organizing
-    train_obj = organize_data(train_df)
+    train_data = organize_data(train_data)
+    val_data = organize_data(val_data)
+    test_data = organize_data(test_data)
 
     #training
-    train_data(train_obj)
+    train_data(train_data)
+
+if __name__ == "__main__":
+    train()

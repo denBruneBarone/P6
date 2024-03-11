@@ -35,7 +35,6 @@ def integrate_flight_data(df):
     total_energy = trapezoidal_integration(new_time_points, interpolated_power)
     # total_energy_wh = total_energy / 3600  # Convert joules to watt-hours
     flight_energy = total_energy
-    print(flight_energy)
     return flight_energy
 
 
