@@ -22,9 +22,21 @@ def target_variable_processing(dataframe):
 
 
 
-def pre_process_flights():
-    pass
+def organize_data(array_of_df):
 
+    flight_dict_list = []
 
-def organize_data():
-    pass
+    for df in array_of_df:
+        df['position_x'] = df['position_x'] - df['position_x'].first()
+        df['position_y'] = df['position_y'] - df['position_y'].first()
+        df['position_z'] = df['position_z'] - df['position_z'].first()
+
+        flight_dict = {
+            "flight": df['flight'].first(),
+            "data": df,
+            "payload": df['payload'].first(),
+            "speed": df['speed'].first(),
+            "altitude": df['altitude'].first()
+        }
+        flight_dict_list.append(flight_dict)
+    return flight_dict_list
