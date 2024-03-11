@@ -1,20 +1,21 @@
 import torch
 from torch.utils.data import DataLoader
-from Model import ModelClass
+from machine_learning.Model import ModelClass
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import GradientBoostingRegressor
-from config import ModelConfig, TrainingConfig, GridSearchConfig
-from prepare_for_training import TrainingDataset  # Import your actual TrainingDataset class
+from machine_learning.config import ModelConfig, TrainingConfig, GridSearchConfig
+from machine_learning.prepare_for_training import TrainingDataset  # Import your actual TrainingDataset class
 
-def main():
+def train_data(dataset):
     # Instantiate your dataset and dataloader using TrainingDataset (replace this with your actual dataset and dataloader)
-    training_dataset = TrainingDataset()
+    training_dataset = TrainingDataset(dataset)
     train_loader = DataLoader(training_dataset, batch_size=TrainingConfig.batch_size, shuffle=True)
 
     # Define hyperparameters and grid search parameters
     input_size = ModelConfig.input_size
     hidden_size = ModelConfig.hidden_size
     criterion = ModelConfig.criterion
+
     perform_grid_search = False
 
     param_grid = GridSearchConfig.param_grid
@@ -58,5 +59,3 @@ def main():
             # This depends on how you intend to use the gradient boosting model in your training process
             # For example, you might update it here based on the predictions of the neural network
 
-if __name__ == "__main__":
-    main()

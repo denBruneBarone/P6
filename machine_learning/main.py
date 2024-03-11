@@ -1,6 +1,7 @@
 import os
 from machine_learning.pre_processing import pre_process_and_split_data
 from machine_learning.prepare_for_training import organize_data
+from machine_learning.training import train_data
 
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
@@ -15,6 +16,7 @@ def train():
     print("Train_len:", len(train_df))
 
     #organizing
-    print(organize_data(train_df))
+    train_obj = organize_data(train_df)
 
     #training
+    train_data(train_obj)
