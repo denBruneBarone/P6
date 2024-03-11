@@ -2,4 +2,7 @@
 
 
 #Data Proscessing
-#-r data_processing/requirements.txt
+-r data_processing/requirements.txt
+
+#Machine Learning
+-r machine_learning/requirements.txt
