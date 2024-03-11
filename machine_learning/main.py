@@ -12,7 +12,6 @@ def train():
     train_df, val_df, test_df = pre_process_and_split_data(input_file)
     print("Val_len:", len(val_df))
     print("test_len:",len(test_df))
-<<<<<<< HEAD
     print("Train_len:", len(train_df))
 
     #organizing
