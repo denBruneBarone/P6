@@ -13,6 +13,7 @@ class TrainingDataset(Dataset):
         sample = self.data.iloc[index].values
         sample = torch.tensor(sample, dtype=torch.float)
         return sample
+    pass
 
 
 # Takes df parameter
