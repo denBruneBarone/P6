@@ -1,22 +1,17 @@
 import numpy as np
 from sklearn.tree import DecisionTreeRegressor
-from machine_learning.config import TrainingConfig
 from machine_learning.prepare_for_training import TrainingDataset
 from sklearn.metrics import mean_squared_error
+from machine_learning.config import HPConfig
 
-def training(dataset, validation_dataset):
-    training_dataset = TrainingDataset(dataset)
-    validation_dataset = TrainingDataset(validation_dataset)
 
-    # Specify hyperparameters
-    criterion = 'friedman_mse'  # You can choose from 'mse', 'friedman_mse', 'mae'
-    max_depth = 5
-    max_features = None  # You can choose from 'auto', 'sqrt', 'log2'
-    max_leaf_nodes = 10
+def training_and_evaluating(train_data, test_data):
+    training_dataset = TrainingDataset(train_data)
+    validation_dataset = TrainingDataset(test_data)
 
     # Instantiate the decision tree model with specified hyperparameters
-    model = DecisionTreeRegressor(criterion=criterion, max_depth=max_depth,
-                                  max_features=max_features, max_leaf_nodes=max_leaf_nodes, random_state=42)
+    model = DecisionTreeRegressor(criterion=HPConfig.criterion, max_depth=HPConfig.max_depth,
+                                  max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes, random_state=42)
 
     # Extract features and targets from the training dataset
     train_features = []
@@ -33,6 +28,7 @@ def training(dataset, validation_dataset):
     # Fit the decision tree model
     model.fit(train_features_np, train_targets_np)
 
+    print("Evaluating...")
     # Evaluate on the validation set
     val_features = []
     val_targets = []
