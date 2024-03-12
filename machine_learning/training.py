@@ -52,9 +52,9 @@ def training(dataset):
             print_freq = 1
             if batch_idx % print_freq == 0:
                 avg_loss = running_loss / print_freq
-                print(f"Batch [{batch_idx}/{len(train_loader)}], Loss: {avg_loss:.4f}")
+                print(f"    Batch [{batch_idx}/{len(train_loader)}], Loss: {avg_loss:.4f}")
                 running_loss = 0.0
 
         # Optionally, you can print or log additional information after each epoch
 
-    print("Training finished.")
+    print("Training finished somehow!")
