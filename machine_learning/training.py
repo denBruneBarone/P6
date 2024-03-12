@@ -1,60 +1,55 @@
-import torch
-from torch.utils.data import DataLoader
-from machine_learning.Model import ModelClass
-from machine_learning.config import ModelConfig, TrainingConfig
+import numpy as np
+from sklearn.tree import DecisionTreeRegressor
+from machine_learning.config import TrainingConfig
 from machine_learning.prepare_for_training import TrainingDataset
+from sklearn.metrics import mean_squared_error
 
+def training(dataset, validation_dataset):
+    training_dataset = TrainingDataset(dataset)
+    validation_dataset = TrainingDataset(validation_dataset)
 
-def training(dataset):
-    training_dataset = TrainingDataset(dataset, max_seq_length=5000)
-    train_loader = DataLoader(training_dataset, batch_size=TrainingConfig.batch_size, shuffle=True)
+    # Specify hyperparameters
+    criterion = 'friedman_mse'  # You can choose from 'mse', 'friedman_mse', 'mae'
+    max_depth = 5
+    max_features = None  # You can choose from 'auto', 'sqrt', 'log2'
+    max_leaf_nodes = 10
 
-    # Define hyperparameters
-    input_size = ModelConfig.input_size
-    hidden_size = ModelConfig.hidden_size
+    # Instantiate the decision tree model with specified hyperparameters
+    model = DecisionTreeRegressor(criterion=criterion, max_depth=max_depth,
+                                  max_features=max_features, max_leaf_nodes=max_leaf_nodes, random_state=42)
 
-    # Instantiate the model
-    model = ModelClass(input_size, hidden_size)
+    # Extract features and targets from the training dataset
+    train_features = []
+    train_targets = []
+    for index in range(len(training_dataset)):
+        input_array, target_array = training_dataset[index]
+        train_features.append(input_array)
+        train_targets.append(target_array)
 
-    # Training loop
-    optimizer = torch.optim.Adam(model.parameters(), lr=TrainingConfig.learning_rate)
-    criterion = torch.nn.MSELoss()
+    # Concatenate the lists along the appropriate axis
+    train_features_np = np.concatenate(train_features, axis=0)
+    train_targets_np = np.concatenate(train_targets, axis=0)
 
-    num_epochs = TrainingConfig.num_epochs
-    for epoch in range(num_epochs):
-        print(f"Epoch [{epoch+1}/{num_epochs}]")
+    # Fit the decision tree model
+    model.fit(train_features_np, train_targets_np)
 
-        running_loss = 0.0
-        for batch_idx, batch_data in enumerate(train_loader, 1):
-            inputs, sequential_data, targets, original_length = batch_data
+    # Evaluate on the validation set
+    val_features = []
+    val_targets = []
+    for index in range(len(validation_dataset)):
+        val_input_array, val_target_array = validation_dataset[index]
+        val_features.append(val_input_array)
+        val_targets.append(val_target_array)
 
-            # Forward pass
-            output = model(inputs, sequential_data, original_length)
+    # Concatenate the lists along the appropriate axis
+    val_features_np = np.concatenate(val_features, axis=0)
+    val_targets_np = np.concatenate(val_targets, axis=0)
 
-            # Ensure the output is reshaped if needed
-            # output = output.view(-1)  # Uncomment if necessary
+    # Predict on the validation set
+    val_predictions = model.predict(val_features_np)
 
-            # Ensure the target tensor has the same size as the output tensor
-            # For example, assuming targets have size [batch_size], reshape it to [batch_size, 1]
-            targets = targets.view(-1, 1)
-
-            # Compute regression loss
-            loss_regression = criterion(output, targets)
-
-            # Backpropagation
-            optimizer.zero_grad()
-            loss_regression.backward()
-            optimizer.step()
-
-            running_loss += loss_regression.item()
-
-            # Print progress every 'print_freq' batches
-            print_freq = 1
-            if batch_idx % print_freq == 0:
-                avg_loss = running_loss / print_freq
-                print(f"    Batch [{batch_idx}/{len(train_loader)}], Loss: {avg_loss:.4f}")
-                running_loss = 0.0
-
-        # Optionally, you can print or log additional information after each epoch
+    # Calculate RMSE on the validation set
+    val_rmse = np.sqrt(mean_squared_error(val_targets_np, val_predictions))
+    print(f"Validation Root Mean Squared Error (RMSE): {val_rmse}")
 
     print("Training finished somehow!")

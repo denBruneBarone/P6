@@ -37,6 +37,24 @@ def integrate_flight_data(df):
     flight_energy = total_energy
     return flight_energy
 
+def integrate_flight_data2(df):
+    """Integrate power consumption for each flight and add interpolated power as a new column."""
+    time_points = df['time'].values
+    power_values = calculate_power(df)
+    interpolated_power, new_time_points = interpolate_power(time_points, power_values)
+
+    # Create a new column with interpolated power values
+    df['interpolated_power'] = np.interp(df['time'], new_time_points, interpolated_power)
+
+    # Calculate total energy using trapezoidal integration
+    total_energy = trapezoidal_integration(new_time_points, interpolated_power)
+
+    # Uncomment the following line if you want to keep the total energy as a separate variable
+    # total_energy_wh = total_energy / 3600  # Convert joules to watt-hours
+
+    return df
+
+
 
 def integrate_specific_flight_data(data):
     """Integrate power consumption for flight 1 and convert to watt-hours."""
