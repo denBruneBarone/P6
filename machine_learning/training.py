@@ -4,6 +4,7 @@ from machine_learning.Model import ModelClass
 from machine_learning.config import ModelConfig, TrainingConfig
 from machine_learning.prepare_for_training import TrainingDataset
 
+
 def training(dataset):
     training_dataset = TrainingDataset(dataset, max_seq_length=5000)
     train_loader = DataLoader(training_dataset, batch_size=TrainingConfig.batch_size, shuffle=True)
@@ -48,7 +49,7 @@ def training(dataset):
             running_loss += loss_regression.item()
 
             # Print progress every 'print_freq' batches
-            print_freq = 100
+            print_freq = 1
             if batch_idx % print_freq == 0:
                 avg_loss = running_loss / print_freq
                 print(f"Batch [{batch_idx}/{len(train_loader)}], Loss: {avg_loss:.4f}")

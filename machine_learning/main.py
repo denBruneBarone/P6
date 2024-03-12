@@ -9,15 +9,19 @@ flights_processed = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_
 
 
 def train():
+    #pre_processing
+    print("Pre-processing data...")
     input_file = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
     train_data, val_data, test_data = pre_process_and_split_data(input_file)
 
     #organizing
+    print("Splitting data...")
     train_data = organize_data(train_data)
     val_data = organize_data(val_data)
     test_data = organize_data(test_data)
 
     #training
+    print("Training...")
     training(train_data)
 
 if __name__ == "__main__":

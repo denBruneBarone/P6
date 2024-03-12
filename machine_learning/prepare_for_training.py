@@ -38,7 +38,8 @@ class TrainingDataset(Dataset):
 
         return input_tensor, sequential_tensor, target_tensor, original_length_tensor
 
-    def pad_sequence(self, sequence, max_seq_length):
+    @staticmethod
+    def pad_sequence(sequence, max_seq_length):
         # Pad the sequence up to max_seq_length
         if len(sequence) < max_seq_length:
             padding_size = max_seq_length - len(sequence)
@@ -48,7 +49,6 @@ class TrainingDataset(Dataset):
             sequence = sequence.iloc[:max_seq_length, :]
 
         return sequence
-
 
 
 # Takes df parameter

@@ -20,16 +20,14 @@ class ModelClass(nn.Module):
         max_sequence_length = max(original_length_tensor)
         output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True, total_length=int(max_sequence_length))
 
+        tensor1 = torch.unsqueeze(inputs, 2)  # torch.Size([32, 1, 1])
+        tensor2 = output  # torch.Size([32, x, hidden_size])
 
-        tensor1 = torch.unsqueeze(inputs, 2)#torch.Size([32, 1, 1])
-        tensor2 = output #torch.Size([32, x, hidden_size])
+        tensor1_expanded = tensor1.expand(-1, output.size(1), output.size(2))
+        # tensor1_expanded = tensor1.expand(32, output.size(1), 1)
 
-        tensor1_expanded = tensor1.expand(32, output.size(1), output.size(2)) ##torch.Size([32, x, hidden_size])
-        # tensor1_expanded = tensor1.expand(32, output.size(1), 1) ##torch.Size([32, x, 1])
-
-        combined_input = torch.cat((output, tensor1_expanded), dim=2) #torch.Size([32, x, hidden_size*2]) eller #torch.Size([32, x, hidden_size+1])
-        #TODO: test bedste tensor configuration. [32, x hidden_size*2] vs [32, x hidden_size+1]
-
+        combined_input = torch.cat((tensor2, tensor1_expanded), dim=2)  # torch.Size([32, x, hidden_size*2]) eller torch.Size([32, x, hidden_size+1])
+        # TODO: test bedste tensor configuration. [32, x, hidden_size*2] vs [32, x, hidden_size+1]
 
         # Pass the combined input through the final linear layer
         final_output = self.fc_layer(combined_input[:, -1, :])
