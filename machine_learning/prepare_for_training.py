@@ -9,15 +9,15 @@ class TrainingDataset:
     def __init__(self, data):
         self.data = data
         self.scaler = StandardScaler()
-        self.fit_scaler()  # Fit the scaler on initialization
+        self.fit_scaler()   # Laver og fitter en scaler ved initialisation.
 
+    # Kigger på alt given data, ikke bare en enkelt dataframe. Konstruerer en passende scaler.
     def fit_scaler(self):
         # Concatenate all DataFrames in self.data into a single DataFrame
         df = pd.concat(self.data, ignore_index=True)
 
         features = df[
             ['time', 'wind_speed', 'wind_angle',
-             'battery_voltage', 'battery_current',
              'position_x', 'position_y', 'position_z',
              'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w',
              'velocity_x', 'velocity_y', 'velocity_z',
@@ -37,7 +37,6 @@ class TrainingDataset:
         # input features
         input_array = sample[
             ['time', 'wind_speed', 'wind_angle',
-             'battery_voltage', 'battery_current',
              'position_x', 'position_y', 'position_z',
              'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w',
              'velocity_x', 'velocity_y', 'velocity_z',
@@ -46,11 +45,13 @@ class TrainingDataset:
              'payload']
         ].values
 
-        # Normalize input features using the previously fitted scaler
+        # Normalize input med scaleren fra initialization
         normalized_input = self.scaler.transform(input_array)
 
         # Output/target feature
-        target_array = sample['cumulative_power'].values.reshape(-1, 1)
+        target_array = sample[
+            ['battery_current', 'battery_voltage']
+        ].values
 
         return normalized_input, target_array
 
