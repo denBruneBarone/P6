@@ -1,6 +1,7 @@
 class ModelConfig:
-    input_size = 1000 #Dimensionen på input for hvert tidsinterval (hver eneste datapoint).
-    embedding_dim = 100
+    input_size = 21 #Dimensionen på input for hvert tidsinterval (hver eneste datapoint).
+
+    #TODO: hidden_size skal findes med grid search CV, men kan ikke se noget om den i paperet?
     hidden_size = 128
     #only when not using grid search cv
     criterion = "friedman_mse"
