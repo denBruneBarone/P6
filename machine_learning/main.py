@@ -2,6 +2,7 @@ import os
 from machine_learning.pre_processing import pre_process_and_split_data
 from machine_learning.prepare_for_training import organize_data
 from machine_learning.training import training
+from machine_learning.grid_search import grid_search
 
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
@@ -21,8 +22,13 @@ def train():
     test_data = organize_data(test_data)
 
     #training
-    print("Training...")
-    training(train_data)
+    #print("Training...")
+    #training(train_data)
+
+    #grid search
+    print("Grid search...")
+    #grid_search(train_data)
+
 
 if __name__ == "__main__":
     train()
