@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.interpolate import interp1d
 
 
@@ -36,6 +37,18 @@ def integrate_flight_data(df):
     # total_energy_wh = total_energy / 3600  # Convert joules to watt-hours
     flight_energy = total_energy
     return flight_energy
+
+
+
+
+# TODO: Caasper fix this. Lige nu finder jeg ikke integralet ved interpolation. Jeg laver den udregning, som du brugte i starten.
+def add_power_to_df(df):
+    df['power_consumption'] = df['battery_voltage'] * df['battery_current']
+    df = df.sort_values(by='time')
+    df['time_difference'] = df['time'].diff().fillna(0)
+    df['power_in_row'] = df['power_consumption'] * df['time_difference']
+    df['cumulative_power'] = np.cumsum(df['power_in_row'])
+    return df
 
 
 def integrate_specific_flight_data(data):

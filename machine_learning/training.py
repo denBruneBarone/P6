@@ -1,81 +1,76 @@
-import torch
-from torch.utils.data import DataLoader
-from machine_learning.Model import ModelClass
-from machine_learning.config import ModelConfig, TrainingConfig
+import numpy as np
+from sklearn.tree import DecisionTreeRegressor
 from machine_learning.prepare_for_training import TrainingDataset
+from sklearn.metrics import mean_squared_error
+from machine_learning.config import HPConfig
 
 
-def training_and_validation(train_dataset, val_dataset):
-    training_dataset = TrainingDataset(train_dataset, max_seq_length=5000)
-    validation_dataset = TrainingDataset(val_dataset, max_seq_length=5000) # Usikker på denne!! OBS
+def training_and_evaluating(train_data, test_data):
+    training_dataset = TrainingDataset(train_data)
+    validation_dataset = TrainingDataset(test_data)
 
-    train_loader = DataLoader(training_dataset, batch_size=TrainingConfig.batch_size, shuffle=True)
-    val_loader = DataLoader(validation_dataset, batch_size=TrainingConfig.batch_size, shuffle=False)
+    # Instantiate the decision tree model with specified hyperparameters
+    model = DecisionTreeRegressor(criterion=HPConfig.criterion, max_depth=HPConfig.max_depth,
+                                  max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes, random_state=42)
 
-    # Define hyperparameters
-    input_size = ModelConfig.input_size
-    hidden_size = ModelConfig.hidden_size
+    # Extract features and targets from the training dataset
+    train_features = []
+    train_targets = []
+    for index in range(len(training_dataset)):
+        input_array, target_array = training_dataset[index]
+        train_features.append(input_array)
+        train_targets.append(target_array)
 
-    # Instantiate the model
-    model = ModelClass(input_size, hidden_size)
+    # Concatenate the lists along the appropriate axis
+    train_features_np = np.concatenate(train_features, axis=0)
+    train_targets_np = np.concatenate(train_targets, axis=0)
 
-    # Training loop
-    optimizer = torch.optim.Adam(model.parameters(), lr=TrainingConfig.learning_rate)
-    criterion = torch.nn.MSELoss()
+    # Fit the decision tree model
+    model.fit(train_features_np, train_targets_np)
 
-    num_epochs = TrainingConfig.num_epochs
-    for epoch in range(num_epochs):
-        print(f"Epoch [{epoch+1}/{num_epochs}]")
+    print("Evaluating...")
+    # Evaluate on the validation set
+    val_features = []
+    val_targets = []
+    for index in range(len(validation_dataset)):
+        val_input_array, val_target_array = validation_dataset[index]
+        val_features.append(val_input_array)
+        val_targets.append(val_target_array)
 
-        model.train() # Set model to training mode
-        train_running_loss = 0.0
-        for batch_idx, train_batch_data in enumerate(train_loader, 1):
-            inputs, sequential_data, targets, original_length = train_batch_data
+    # Concatenate the lists along the appropriate axis
+    val_features_np = np.concatenate(val_features, axis=0)
+    val_targets_np = np.concatenate(val_targets, axis=0)
 
-            # Forward pass
-            output = model(inputs, sequential_data, original_length)
+    # Predict on the validation set
+    val_predictions = model.predict(val_features_np)
 
-            # Ensure the output is reshaped if needed
-            # output = output.view(-1)  # Uncomment if necessary
+    # Calculate RMSE for the two output parameters
+    val_rmse = np.sqrt(mean_squared_error(val_targets_np, val_predictions))
+    print(f"Validation Root Mean Squared Error (RMSE) for Voltage and Current: {val_rmse}")
 
-            # Ensure the target tensor has the same size as the output tensor
-            # For example, assuming targets have size [batch_size], reshape it to [batch_size, 1]
-            targets = targets.view(-1, 1)
+    # Calculate power consumption predictions by multiplying voltage and current predictions
+    power_consumption_predictions = val_predictions[:, 0] * val_predictions[:, 1]
 
-            # Compute regression loss
-            loss_regression = criterion(output, targets)
+    # Calculate the time difference between each timestamp
+    time_diff = np.diff(val_features_np[:, 0], prepend=0)
 
-            # Backpropagation
-            optimizer.zero_grad()
-            loss_regression.backward()
-            optimizer.step()
+    # Adjust power consumption predictions by multiplying with the time difference
+    adjusted_power_consumption = power_consumption_predictions * time_diff
 
-            train_running_loss += loss_regression.item()
+    # Calculate cumulative power consumption for each flight
+    cumulative_power = np.cumsum(adjusted_power_consumption)
 
-            # Print progress every 'print_freq' batches
-            print_freq = 1
-            if batch_idx % print_freq == 0:
-                avg_loss = train_running_loss / print_freq
-                print(f"    Batch [{batch_idx}/{len(train_loader)}], Loss: {avg_loss:.4f}")
-                running_loss = 0.0
+    # Calculate RMSE on the original cumulative power for the validation set
+    val_targets_cumulative_power = np.cumsum(val_targets_np[:, 0] * val_targets_np[:, 1] * time_diff)
+    original_val_rmse = np.sqrt(mean_squared_error(val_targets_cumulative_power, cumulative_power))
+    # udtryk for forskellen fra cumulative power på ground truth og cumulative power på vores predictions. Jo tættere på nul, jo strammere hul
+    print(f"Original Validation Root Mean Squared Error (RMSE) for Cumulative Power: {original_val_rmse}")
 
-        # Validation phase
-        model.eval()  # Set model to evaluation mode
-        val_running_loss = 0.0
-        with torch.no_grad():
-            for val_batch_idx, val_batch_data in enumerate(val_loader, 1):
-                val_inputs, val_sequential_data, val_targets, val_original_length = val_batch_data
-
-                val_output = model(val_inputs, val_sequential_data, val_original_length)
-
-                val_targets = val_targets.view(-1, 1)
-                val_loss = criterion(val_output, val_targets)
-
-                val_running_loss += val_loss.item()
-
-        avg_val_loss = val_running_loss / len(val_loader)
-        print(f"Validation Loss: {avg_val_loss:.4f}")
-
-        # Optionally, you can print or log additional information after each epoch
+    # Calculate RMSE on the adjusted cumulative power for the validation set
+    val_rmse = np.sqrt(mean_squared_error(val_targets_np[:, 0] * val_targets_np[:, 1], power_consumption_predictions))
+    # Udtryk for hvor præcis vores cumulative power på vores predictions er i forhold til sig selv. Store udsving er dårlige.
+    print(f"Adjusted Validation Root Mean Squared Error (RMSE) for Cumulative Power: {val_rmse}")
 
     print("Training finished somehow!")
+
+    # TODO: Caasper her regnet jeg også bare cumulative power consumption på den simple måde. Her skal den også være integralet i stedet. Du kan bruge dem samme funktion som du laver i trapezoid_integration.
