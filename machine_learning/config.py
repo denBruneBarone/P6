@@ -1,11 +1,14 @@
-class ModelConfig:
-    input_size = 1000
-    embedding_dim = 100
-    hidden_size = 128
-    num_classes = 3
+class HPConfig:
+    criterion = 'friedman_mse'  # samme som paper
+    max_depth = 10  # værdien fra paperet om modeller er 7
+    max_features = None  # samme som paper
+    max_leaf_nodes = 500  # værdien fra paperet om modeller er 10
 
+class GridSearchConfig:
+    param_grid = {
+        'criterion': ['mse', 'friedman_mse', 'mae'],
+        'max_depth': [2, 3, 4, 5, 6, 7, 8],
+        'max_features': [None, 'sqrt', 'log2'],
+        'max_leaf_nodes': [2, 3, 4, 5, 6, 7, 8, 9, 10]
+    }
 
-class TrainingConfig:
-    num_epochs = 10
-    batch_size = 32
-    learning_rate = 0.05
