@@ -11,7 +11,8 @@ def training_and_evaluating(train_data, test_data):
 
     # Instantiate the decision tree model with specified hyperparameters
     model = DecisionTreeRegressor(criterion=HPConfig.criterion, max_depth=HPConfig.max_depth,
-                                  max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes, random_state=42)
+                                  max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes,
+                                  random_state=42)
 
     # Extract features and targets from the training dataset
     train_features = []
@@ -68,10 +69,14 @@ def training_and_evaluating(train_data, test_data):
     print(f"Original Test Root Mean Squared Error (RMSE) for Cumulative Power: {original_test_rmse}")
 
     # Calculate RMSE on the adjusted cumulative power for the test set
-    test_rmse = np.sqrt(mean_squared_error(test_targets_np[:, 0] * test_targets_np[:, 1], power_consumption_predictions))
+    test_rmse = np.sqrt(
+        mean_squared_error(test_targets_np[:, 0] * test_targets_np[:, 1], power_consumption_predictions))
     # Udtryk for hvor præcis vores cumulative power på vores predictions er i forhold til sig selv. Store udsving er dårlige.
     print(f"Adjusted Test Root Mean Squared Error (RMSE) for Cumulative Power: {test_rmse}")
 
     print("Training finished somehow!")
 
-    # TODO: Caasper her regnet jeg også bare cumulative power consumption på den simple måde. Her skal den også være integralet i stedet. Du kan bruge dem samme funktion som du laver i trapezoid_integration.
+    # TODO: Caasper her regnet jeg også bare cumulative power consumption på den simple måde.
+    #  Her skal den også være integralet i stedet. Du kan bruge dem samme funktion som du laver i trapezoid_integration.
+
+
