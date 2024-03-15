@@ -1,13 +1,12 @@
 import numpy as np
 from sklearn.tree import DecisionTreeRegressor
-from machine_learning.prepare_for_training import TrainingDataset
 from sklearn.metrics import mean_squared_error
 from machine_learning.config import HPConfig
+from machine_learning.prepare_for_training import TrainingDataset
 
 
-def training_and_evaluating(train_data, test_data):
+def train_model(train_data):
     training_dataset = TrainingDataset(train_data)
-    test_dataset = TrainingDataset(test_data)
 
     # Instantiate the decision tree model with specified hyperparameters
     model = DecisionTreeRegressor(criterion=HPConfig.criterion, max_depth=HPConfig.max_depth,
@@ -29,8 +28,14 @@ def training_and_evaluating(train_data, test_data):
     # Fit the decision tree model
     model.fit(train_features_np, train_targets_np)
 
+    return model
+
+
+def evaluate_model(model, test_data):
+    test_dataset = TrainingDataset(test_data)
+
     print("Evaluating...")
-    # Evaluate on the test set
+    # Extract features and targets from the test dataset
     test_features = []
     test_targets = []
     for index in range(len(test_dataset)):
@@ -46,7 +51,6 @@ def training_and_evaluating(train_data, test_data):
     test_predictions = model.predict(test_features_np)
 
     # Calculate RMSE for the two output parameters
-    # TODO: find rmse på begge targets individuelt
     test_rmse = np.sqrt(mean_squared_error(test_targets_np, test_predictions))
     print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {test_rmse}")
 
@@ -66,15 +70,13 @@ def training_and_evaluating(train_data, test_data):
     test_targets_cumulative_power = np.cumsum(test_targets_np[:, 0] * test_targets_np[:, 1] * time_diff)
     original_test_rmse = np.sqrt(mean_squared_error(test_targets_cumulative_power, cumulative_power))
 
-    # Udtryk for forskellen fra cumulative power på ground truth og cumulative power på vores predictions.
-    # Jo tættere på nul, jo strammere hul
     print(f"Original Test Root Mean Squared Error (RMSE) for Cumulative Power: {original_test_rmse}")
 
     # Calculate RMSE on the adjusted cumulative power for the test set
     test_rmse = np.sqrt(
         mean_squared_error(test_targets_np[:, 0] * test_targets_np[:, 1], power_consumption_predictions))
-    # Udtryk for hvor præcis vores cumulative power på vores predictions er i forhold til sig selv.
-    # Store udsving er dårlige.
     print(f"Adjusted Test Root Mean Squared Error (RMSE) for Cumulative Power: {test_rmse}")
 
-    print("Training finished somehow!")
+    print("Evaluation finished!")
+
+    return model
