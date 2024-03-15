@@ -65,18 +65,16 @@ def training_and_evaluating(train_data, test_data):
     # Calculate RMSE on the original cumulative power for the test set
     test_targets_cumulative_power = np.cumsum(test_targets_np[:, 0] * test_targets_np[:, 1] * time_diff)
     original_test_rmse = np.sqrt(mean_squared_error(test_targets_cumulative_power, cumulative_power))
-    # udtryk for forskellen fra cumulative power på ground truth og cumulative power på vores predictions. Jo tættere på nul, jo strammere hul
+
+    # Udtryk for forskellen fra cumulative power på ground truth og cumulative power på vores predictions.
+    # Jo tættere på nul, jo strammere hul
     print(f"Original Test Root Mean Squared Error (RMSE) for Cumulative Power: {original_test_rmse}")
 
     # Calculate RMSE on the adjusted cumulative power for the test set
     test_rmse = np.sqrt(
         mean_squared_error(test_targets_np[:, 0] * test_targets_np[:, 1], power_consumption_predictions))
-    # Udtryk for hvor præcis vores cumulative power på vores predictions er i forhold til sig selv. Store udsving er dårlige.
+    # Udtryk for hvor præcis vores cumulative power på vores predictions er i forhold til sig selv.
+    # Store udsving er dårlige.
     print(f"Adjusted Test Root Mean Squared Error (RMSE) for Cumulative Power: {test_rmse}")
 
     print("Training finished somehow!")
-
-    # TODO: Caasper her regnet jeg også bare cumulative power consumption på den simple måde.
-    #  Her skal den også være integralet i stedet. Du kan bruge dem samme funktion som du laver i trapezoid_integration.
-
-

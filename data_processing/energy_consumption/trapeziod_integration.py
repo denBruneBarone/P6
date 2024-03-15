@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from scipy.interpolate import interp1d
 
 
@@ -39,9 +38,6 @@ def integrate_flight_data(df):
     return flight_energy
 
 
-
-
-# TODO: Caasper fix this. Lige nu finder jeg ikke integralet ved interpolation. Jeg laver den udregning, som du brugte i starten.
 def add_power_to_df(df):
     df['power_consumption'] = df['battery_voltage'] * df['battery_current']
     df = df.sort_values(by='time')
@@ -65,7 +61,8 @@ def integrate_specific_flight_data(data):
 
 
 def integrate_each_row_specific_flight_data(data):
-    """Integrate power consumption for flight 1 between each consecutive pair of rows and add integrated power to DataFrame."""
+    """Integrate power consumption for flight 1 between each consecutive pair of rows
+    and add integrated power to DataFrame."""
     flight_data = data[data['flight'] == 1]  # Filter data for flight 1
     time_points = flight_data['time'].values
     power_values = calculate_power(flight_data)
@@ -98,4 +95,3 @@ def add_cumulative_column(data):
     """Add a cumulative sum column to the flight data."""
     data['cumulative'] = data['integrated_power'].cumsum()
     return data
-

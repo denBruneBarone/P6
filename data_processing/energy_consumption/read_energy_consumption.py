@@ -1,8 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-
-from data_processing.energy_consumption import datapoints_summation, trapeziod_integration
-from data_processing.energy_consumption.trapeziod_integration import trapezoidal_integration
+from data_processing.energy_consumption import trapeziod_integration
 
 
 def read_csv():
@@ -14,6 +12,7 @@ def read_csv():
 def plot_connected_graph(data_x, data_y, label, color, linestyle='-'):
     plt.plot(data_x, data_y, linestyle, color=color, marker='o', label=label)
 
+
 def plot_stacked_chart(data_summing, data_integrated):
     plt.figure(figsize=(50, 30))
 
@@ -21,7 +20,8 @@ def plot_stacked_chart(data_summing, data_integrated):
     plt.plot(list(data_summing.keys()), list(data_summing.values()), color='blue', marker='o', label='Data Summing')
 
     # Plot connected graph for data_integrated
-    plt.plot(list(data_integrated.keys()), list(data_integrated.values()), color='orange', marker='o', label='Data Integrated')
+    plt.plot(list(data_integrated.keys()), list(data_integrated.values()), color='orange', marker='o',
+             label='Data Integrated')
 
     # Stacked chart
     for flight in data_summing.keys():
