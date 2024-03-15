@@ -14,7 +14,7 @@ def extract_flights(df):
 
 def split_data(df, train_size=0.8, random_state=42):
     flights_list = extract_flights(df)
-    train_data, test_data = train_test_split(flights_list, test_size=1-train_size, random_state=random_state)
+    train_data, test_data = train_test_split(flights_list, test_size=1 - train_size, random_state=random_state)
     return train_data, test_data
 
 
@@ -22,4 +22,3 @@ def pre_process_and_split_data(file_path):
     df = load_data(file_path)
     train_data, test_data = split_data(df)
     return train_data, test_data
-
