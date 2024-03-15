@@ -12,21 +12,20 @@ MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/traine
 
 
 def train():
+    print("Pre-processing data...")
+    input_file = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
+    print("Splitting data...")
+    train_data, test_data = pre_process_and_split_data(input_file)
+    print("Formatting data...")
+    train_data = format_data(train_data)
+    test_data = format_data(test_data)
+
     # Check if the model file exists
     if os.path.exists(MODEL_FILE_PATH):
         print("Loading pre-trained model...")
         with open(MODEL_FILE_PATH, 'rb') as model_file:
             model = pickle.load(model_file)
     else:
-        print("Pre-processing data...")
-        input_file = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
-
-        print("Splitting data...")
-        train_data, test_data = pre_process_and_split_data(input_file)
-        print("Formatting data...")
-        train_data = format_data(train_data)
-        test_data = format_data(test_data)
-
         print("Training...")
         model = train_model(train_data)
 
