@@ -22,7 +22,7 @@ def train():
 
     # training
     print("Training...")
-    training_and_evaluating(train_data, test_data)
+    training_and_evaluating(train_data, test_data, grid_search_cv=True)
 
 
 if __name__ == "__main__":
