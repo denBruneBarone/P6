@@ -63,6 +63,6 @@ All documentation can be found on Overleaf
 
 
 ### Contact Info
-Please call 30246017
+In order to contact an author, please feel free to send an e-mail or via GitHub.
 
 Available all hours.

@@ -1,5 +1,3 @@
-import numpy as np
-from torch.utils.data import Dataset
 from data_processing.energy_consumption.trapeziod_integration import add_power_to_df
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
