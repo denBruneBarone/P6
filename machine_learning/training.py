@@ -41,8 +41,6 @@ def training_and_evaluating(train_data, test_data, grid_search_cv=True):
             train_features.append(input_array)
             train_targets.append(target_array)
 
-
-
         # concatenate over axis 0, hvilket svarer til rows i et numpy array.
         # Det svarer til at lave et stort array ud ad alle input arrays, hvor hver entry er inputs til een flight.
         train_features_np = np.concatenate(train_features, axis=0)
