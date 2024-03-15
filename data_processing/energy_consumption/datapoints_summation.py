@@ -1,22 +1,12 @@
-def calculate_energy_by_summing(data):
-
-    # Calculate power consumption for each row
-    data['power'] = data['battery_voltage'] * data['battery_current']
-
-    # Group data by flight and sum power consumption for each flight
-    flight_groups = data.groupby('flight')
-    flight_energy = {}
-    for flight, flight_data in flight_groups:
-        total_energy = 0
-        total_energy_wh = 0
-        prev_time = flight_data['time'].iloc[0]
-        for index, row in flight_data.iterrows():
-            time_interval = row['time'] - prev_time
-            total_energy += row['power'] * time_interval
-            prev_time = row['time']
-            total_energy_wh = total_energy / 3600
-        flight_energy[flight] = total_energy_wh
-    return flight_energy
+import numpy as np
 
 
-
+def add_power_to_df(df):
+    df['time_interval'] = df['time'].diff().fillna(0)
+    # Unit of power
+    df['power_w'] = df['battery_voltage'] * df['battery_current']
+    # Unit of energy
+    df['energy_j'] = df['battery_voltage'] * df['battery_current'] * df['time_interval']
+    df['cumulative_power'] = np.cumsum(df['energy_j'])
+    df.drop(columns=['time_interval'], inplace=True)
+    return df
