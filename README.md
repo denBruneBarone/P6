@@ -1,6 +1,6 @@
 # P6 Drones
 
-P6 about drones
+P6 about drones and ML
 
 ## Table of Contents
 
