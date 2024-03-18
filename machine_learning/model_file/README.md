@@ -1,0 +1,1 @@
+This directory is for allowing empty folder for the model_file.
