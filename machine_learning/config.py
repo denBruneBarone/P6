@@ -4,6 +4,12 @@ class HPConfig:
     max_features = None  # samme som paper
     max_leaf_nodes = 500  # værdien fra paperet om modeller er 10
 
+class BestHPConfig:
+    criterion = None
+    max_depth = None
+    max_features = None
+    max_leaf_nodes = None
+
 class GridSearchConfig:
     param_grid = {
         'criterion': ['friedman_mse', 'squared_error'],
