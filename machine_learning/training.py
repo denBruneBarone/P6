@@ -6,6 +6,7 @@ from sklearn.metrics import mean_squared_error
 from machine_learning.config import HPConfig, GridSearchConfig
 from sklearn.metrics import make_scorer
 
+
 def rmse_cum_power(true_labels, predicted_labels):
     time_diff = np.diff(true_labels[:, 0], prepend=0)
     true_cumulative_power = np.cumsum(predicted_labels[:, 0] * predicted_labels[:, 1] * time_diff)
@@ -27,20 +28,20 @@ def training_and_evaluating(train_data, test_data, grid_search_cv=True):
         training_dataset = TrainingDataset(train_data)
         test_dataset = TrainingDataset(test_data)
 
-
         # Instantiate the decision tree model with specified hyperparameters
         model = DecisionTreeRegressor()
         # splits the train-test data into n_splits number of subsets for cross validation
-        cv = KFold(n_splits=5, shuffle=True, random_state=42)
+        cv = KFold(n_splits=5, shuffle=True, random_state=42)  # TODO best n_split?
         grid_search = GridSearchCV(estimator=model, param_grid=GridSearchConfig.param_grid,
-                                   cv=cv, scoring=custom_scoring,verbose=2)
+                                   cv=cv, scoring=custom_scoring, verbose=2)
         train_features = []
         train_targets = []
+
+
         for index in range(len(training_dataset)):
             input_array, target_array = training_dataset[index]
             train_features.append(input_array)
             train_targets.append(target_array)
-
 
         # Concatenate the lists along the appropriate axis
         train_features_np = np.concatenate(train_features, axis=0)
@@ -54,9 +55,37 @@ def training_and_evaluating(train_data, test_data, grid_search_cv=True):
         print("Best Params: ", best_params)
         print("Best score: ", best_score)
 
-        best_model = grid_search.best_estimator_
-        best_model.fit(train_features_np, train_targets_np)
+        best_dt_model = grid_search.best_estimator_
+        best_dt_model.fit(train_features_np, train_targets_np)
         # TODO: Tilføj print detaljer
+
+        print("Evaluating...")
+        # Evaluate on the test set
+        test_features = []
+        test_targets = []
+        for index in range(len(test_dataset)):
+            test_input_array, test_target_array = test_dataset[index]
+            test_features.append(test_input_array)
+            test_targets.append(test_target_array)
+
+        # Concatenate the lists along the appropriate axis
+        test_features_np = np.concatenate(test_features, axis=0)
+        test_targets_np = np.concatenate(test_targets, axis=0)
+
+        # Predict on the test set
+        test_predictions = best_dt_model.predict(test_features_np)
+
+        # Calculate RMSE for the two output parameters
+        test_rmse = np.sqrt(mean_squared_error(test_targets_np, test_predictions))
+        print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {test_rmse}")
+
+        # udtryk for forskellen fra cumulative power på ground truth og cumulative power på vores predictions.
+        # Jo tættere på nul, jo strammere hul
+        print(f"Original Test Root Mean Squared Error (RMSE) for Cumulative Power: "
+              f"{rmse_cum_power(test_targets_np, test_predictions)}")
+
+        print("Training finished somehow!")
+
     else:
 
         training_dataset = TrainingDataset(train_data)
@@ -112,7 +141,3 @@ def training_and_evaluating(train_data, test_data, grid_search_cv=True):
 
         # TODO: Caasper her regnet jeg også bare cumulative power consumption på den simple måde.
         #  Her skal den også være integralet i stedet. Du kan bruge dem samme funktion som du laver i trapezoid_integration.
-
-
-
-
