@@ -1,28 +1,41 @@
 import os
+import pickle
 from machine_learning.pre_processing import pre_process_and_split_data
 from machine_learning.prepare_for_training import format_data
-from machine_learning.training import training_and_evaluating
-
+from machine_learning.training import train_model, evaluate_model
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 flights_processed = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
 
+# Define the path for saving/loading the model
+MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/trained_model.pkl")
+
 
 def train():
-    # pre_processing
     print("Pre-processing data...")
     input_file = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
-
-    # organizing
     print("Splitting data...")
     train_data, test_data = pre_process_and_split_data(input_file)
     print("Formatting data...")
     train_data = format_data(train_data)
     test_data = format_data(test_data)
 
-    # training
-    print("Training...")
-    training_and_evaluating(train_data, test_data, grid_search_cv=True)
+    # Check if the model file exists
+    if os.path.exists(MODEL_FILE_PATH):
+        print("Loading pre-trained model...")
+        with open(MODEL_FILE_PATH, 'rb') as model_file:
+            model = pickle.load(model_file)
+    else:
+        print("Training...")
+        model = train_model(train_data)
+
+        # Save the trained model
+        print("Saving trained model...")
+        with open(MODEL_FILE_PATH, 'wb') as model_file:
+            pickle.dump(model, model_file)
+
+    # Perform prediction using the trained model
+    evaluate_model(model, test_data)
 
 
 if __name__ == "__main__":
