@@ -1,7 +1,7 @@
 #datasets.
 data/datasets/rodrigues/*
 !data/datasets/rodrigues/README.txt
-/machine_learning/model_file/trained_model.pkl
+/machine_learning/model_file/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
