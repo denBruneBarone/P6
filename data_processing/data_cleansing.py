@@ -1,5 +1,6 @@
-import pandas as pd
 import os
+
+import pandas as pd
 import requests
 from machine_learning.pre_processing import load_data
 
@@ -13,6 +14,7 @@ model_url = "https://kilthub.cmu.edu/ndownloader/files/26385151"
 def main():
     try:
         if os.path.exists("data/datasets/rodrigues/flights.csv"):
+            print("Found flights.csv")
             filter_flights()
         else:
             print('''
@@ -41,6 +43,10 @@ def download_model():
         # Check if the file exists after writing
         if os.path.exists(input_file):
             print(f"Download successful: {input_file}")
+            # Number of rows in flights.csv file:
+            df = pd.read_csv(input_file)
+            num_rows = len(df)
+            print("Number of rows in flights.csv:", num_rows)
             return True
         else:
             print("Error: File not found after download.")
@@ -51,13 +57,17 @@ def download_model():
 
 
 def filter_flights():
-    print(input_file)
+    print("Generating flights_processed")
     data = load_data(input_file)
-    # Change to starts with
-    data = data[((data.route == 'R1') | (data.route == 'R2') | (data.route == 'R3') | (data.route == 'R4') |
-                 (data.route == 'R5') | (data.route == 'R6') | (data.route == 'R7'))]
+    # Checks if "Route" in file starts with R, and goes from 1 through 7
+    data = data[data['route'].apply(lambda x: any(x.startswith(f'R{i}') for i in range(1, 8)))]
     data_processed = data
     data_processed.to_csv(output_file, index=False)
+
+    # Number of rows in flights_processed.csv file:
+    df = pd.read_csv(output_file)
+    num_rows = len(df)
+    print("Number of rows in flights_processed.csv:", num_rows)
 
 
 if __name__ == '__main__':
