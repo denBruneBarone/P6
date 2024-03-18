@@ -19,21 +19,12 @@ def rmse_cum_power(true_labels, predicted_labels):
 def custom_scoring(true_labels, predicted_labels):
     return rmse_cum_power(true_labels, predicted_labels)
 
-
-def train_model(train_data):
-    training_dataset = TrainingDataset(train_data)
-
-    # Instantiate the decision tree model with specified hyperparameters
-    model = DecisionTreeRegressor(criterion=HPConfig.criterion, max_depth=HPConfig.max_depth,
-                                  max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes,
-                                  random_state=42)
 custom_scoring = make_scorer(custom_scoring)
 
 
-def training_and_evaluating(train_data, test_data, grid_search_cv=True):
+def train_model(train_data, grid_search_cv=True):
     if grid_search_cv:
         training_dataset = TrainingDataset(train_data)
-        test_dataset = TrainingDataset(test_data)
 
         # Instantiate the decision tree model with specified hyperparameters
         model = DecisionTreeRegressor()
@@ -41,9 +32,9 @@ def training_and_evaluating(train_data, test_data, grid_search_cv=True):
         cv = KFold(n_splits=5, shuffle=True, random_state=42)  # TODO best n_split?
         grid_search = GridSearchCV(estimator=model, param_grid=GridSearchConfig.param_grid,
                                    cv=cv, scoring=custom_scoring, verbose=2)
+
         train_features = []
         train_targets = []
-
 
         for index in range(len(training_dataset)):
             input_array, target_array = training_dataset[index]
@@ -66,37 +57,8 @@ def training_and_evaluating(train_data, test_data, grid_search_cv=True):
         best_dt_model.fit(train_features_np, train_targets_np)
         # TODO: Tilføj print detaljer
 
-        print("Evaluating...")
-        # Evaluate on the test set
-        test_features = []
-        test_targets = []
-        for index in range(len(test_dataset)):
-            test_input_array, test_target_array = test_dataset[index]
-            test_features.append(test_input_array)
-            test_targets.append(test_target_array)
-
-        # Concatenate the lists along the appropriate axis
-        test_features_np = np.concatenate(test_features, axis=0)
-        test_targets_np = np.concatenate(test_targets, axis=0)
-
-        # Predict on the test set
-        test_predictions = best_dt_model.predict(test_features_np)
-
-        # Calculate RMSE for the two output parameters
-        test_rmse = np.sqrt(mean_squared_error(test_targets_np, test_predictions))
-        print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {test_rmse}")
-
-        # udtryk for forskellen fra cumulative power på ground truth og cumulative power på vores predictions.
-        # Jo tættere på nul, jo strammere hul
-        print(f"Original Test Root Mean Squared Error (RMSE) for Cumulative Power: "
-              f"{rmse_cum_power(test_targets_np, test_predictions)}")
-
-        print("Training finished somehow!")
-
     else:
-
         training_dataset = TrainingDataset(train_data)
-        test_dataset = TrainingDataset(test_data)
 
         # Instantiate the decision tree model with specified hyperparameters
         model = DecisionTreeRegressor(criterion=HPConfig.criterion, max_depth=HPConfig.max_depth,
@@ -136,6 +98,8 @@ def evaluate_model(model, test_data):
     # Concatenate the lists along the appropriate axis
     test_features_np = np.concatenate(test_features, axis=0)
     test_targets_np = np.concatenate(test_targets, axis=0)
+
+    model.fit(test_features_np, test_targets_np)
 
     # Predict on the test set
     test_predictions = model.predict(test_features_np)
