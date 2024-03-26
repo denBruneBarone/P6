@@ -38,15 +38,6 @@ def integrate_flight_data(df):
     return flight_energy
 
 
-def add_power_to_df(df):
-    df['power_consumption'] = df['battery_voltage'] * df['battery_current']
-    df = df.sort_values(by='time')
-    df['time_difference'] = df['time'].diff().fillna(0)
-    df['power_in_row'] = df['power_consumption'] * df['time_difference']
-    df['cumulative_power'] = np.cumsum(df['power_in_row'])
-    return df
-
-
 def integrate_specific_flight_data(data):
     """Integrate power consumption for flight 1 and convert to watt-hours."""
     flight_energy = {}

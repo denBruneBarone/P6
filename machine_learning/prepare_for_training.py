@@ -1,4 +1,4 @@
-from data_processing.energy_consumption.trapeziod_integration import add_power_to_df
+from data_processing.energy_consumption.datapoints_summation import add_power_to_df
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 
@@ -7,7 +7,7 @@ class TrainingDataset:
     def __init__(self, data):
         self.data = data
         self.scaler = StandardScaler()
-        self.fit_scaler()   # Laver og fitter en scaler ved initialisation.
+        self.fit_scaler()  # Laver og fitter en scaler ved initialisation.
 
     # Kigger på alt given data, ikke bare en enkelt dataframe. Konstruerer en passende scaler.
     def fit_scaler(self):
@@ -54,14 +54,24 @@ class TrainingDataset:
         return normalized_input, target_array
 
 
-def format_data(array_of_df):
-    formatted_array = []
-    for df in array_of_df:
+def format_data(input_data):
+    if isinstance(input_data, list):
+        formatted_array = []
+        for df in input:
+            df['position_x'] = df['position_x'] - df['position_x'].iloc[0]
+            df['position_y'] = df['position_y'] - df['position_y'].iloc[0]
+            df['position_z'] = df['position_z'] - df['position_z'].iloc[0]
+
+            df = df.drop(columns=['flight', 'speed', 'altitude', 'date', 'time_day', 'route'])
+            df = add_power_to_df(df)
+            formatted_array.append(df)
+        return formatted_array
+    elif isinstance(input_data, pd.DataFrame):
+        df = input_data
         df['position_x'] = df['position_x'] - df['position_x'].iloc[0]
         df['position_y'] = df['position_y'] - df['position_y'].iloc[0]
         df['position_z'] = df['position_z'] - df['position_z'].iloc[0]
 
         df = df.drop(columns=['flight', 'speed', 'altitude', 'date', 'time_day', 'route'])
         df = add_power_to_df(df)
-        formatted_array.append(df)
-    return formatted_array
+        return df
