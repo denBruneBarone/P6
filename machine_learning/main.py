@@ -27,7 +27,7 @@ def train():
             model = pickle.load(model_file)
     else:
         print("Training...")
-        model = train_model(train_data)
+        model = train_model(train_data, grid_search_cv=False)
 
         # Save the trained model
         print("Saving trained model...")

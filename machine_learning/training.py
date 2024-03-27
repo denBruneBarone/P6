@@ -3,7 +3,7 @@ from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.tree import DecisionTreeRegressor
 from machine_learning.prepare_for_training import TrainingDataset
 from sklearn.metrics import mean_squared_error
-from machine_learning.config import HPConfig, GridSearchConfig
+from machine_learning.config import HPConfig, GridSearchConfig, BestHPConfig
 from sklearn.metrics import make_scorer
 
 
@@ -17,7 +17,7 @@ def rmse_cum_power(true_labels, predicted_labels):
 
 
 def custom_scoring(true_labels, predicted_labels):
-    return rmse_cum_power(true_labels, predicted_labels)
+    return -rmse_cum_power(true_labels, predicted_labels)
 
 custom_scoring = make_scorer(custom_scoring)
 
@@ -61,8 +61,8 @@ def train_model(train_data, grid_search_cv=True):
         training_dataset = TrainingDataset(train_data)
 
         # Instantiate the decision tree model with specified hyperparameters
-        model = DecisionTreeRegressor(criterion=HPConfig.criterion, max_depth=HPConfig.max_depth,
-                                      max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes,
+        model = DecisionTreeRegressor(criterion=BestHPConfig.criterion, max_depth=BestHPConfig.max_depth,
+                                      max_features=BestHPConfig.max_features, max_leaf_nodes=BestHPConfig.max_leaf_nodes,
                                       random_state=42)
 
         # Extract features and targets from the training dataset
@@ -124,13 +124,7 @@ def evaluate_model(model, test_data):
     test_targets_cumulative_power = np.cumsum(test_targets_np[:, 0] * test_targets_np[:, 1] * time_diff)
     original_test_rmse = np.sqrt(mean_squared_error(test_targets_cumulative_power, cumulative_power))
 
-    print(f"Original Test Root Mean Squared Error (RMSE) for Cumulative Power: {original_test_rmse}")
-
-    # Calculate RMSE on the adjusted cumulative power for the test set
-    test_rmse = np.sqrt(
-        mean_squared_error(test_targets_np[:, 0] * test_targets_np[:, 1], power_consumption_predictions))
-    print(f"Adjusted Test Root Mean Squared Error (RMSE) for Cumulative Power: {test_rmse}")
-
+    print(f"Root Mean Squared Error (RMSE) for Cumulative Power: {original_test_rmse}")
     print("Evaluation finished!")
 
     return model

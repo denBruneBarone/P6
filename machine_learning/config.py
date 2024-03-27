@@ -5,10 +5,10 @@ class HPConfig:
     max_leaf_nodes = 500  # værdien fra paperet om modeller er 10
 
 class BestHPConfig:
-    criterion = None
-    max_depth = None
+    criterion = 'friedman_mse'
+    max_depth = 10
     max_features = None
-    max_leaf_nodes = None
+    max_leaf_nodes = 10
 
 class GridSearchConfig:
     param_grid = {
