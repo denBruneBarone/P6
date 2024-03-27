@@ -6,7 +6,7 @@ class HPConfig:
 
 class BestHPConfig:
     criterion = 'friedman_mse'
-    max_depth = 10
+    max_depth = 8
     max_features = None
     max_leaf_nodes = 10
 
