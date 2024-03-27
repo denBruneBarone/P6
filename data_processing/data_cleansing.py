@@ -44,7 +44,7 @@ def download_model():
         if os.path.exists(input_file):
             print(f"Download successful: {input_file}")
             # Number of rows in flights.csv file:
-            df = pd.read_csv(input_file)
+            df = pd.read_csv(input_file, low_memory=False)
             num_rows = len(df)
             print("Number of rows in flights.csv:", num_rows)
             return True
@@ -65,7 +65,7 @@ def filter_flights():
     data_processed.to_csv(output_file, index=False)
 
     # Number of rows in flights_processed.csv file:
-    df = pd.read_csv(output_file)
+    df = pd.read_csv(output_file, low_memory=False)
     num_rows = len(df)
     print("Number of rows in flights_processed.csv:", num_rows)
 
