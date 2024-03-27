@@ -53,8 +53,8 @@ def train_model(train_data, grid_search_cv=True):
         print("Best Params: ", best_params)
         print("Best score: ", best_score)
 
-        best_dt_model = grid_search.best_estimator_
-        best_dt_model.fit(train_features_np, train_targets_np)
+        model = grid_search.best_estimator_
+        model.fit(train_features_np, train_targets_np)
         # TODO: Tilføj print detaljer
 
     else:
