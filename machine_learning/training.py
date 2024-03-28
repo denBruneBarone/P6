@@ -34,6 +34,22 @@ def custom_scoring(true_labels, predicted_labels):
 custom_scoring = make_scorer(custom_scoring, greater_is_better=False)
 
 
+def extract_features_and_targets_from_dataset(dataset):
+    features_list = []
+    targets_list = []
+    for index in range(len(dataset)):
+        features, targets = dataset[index]
+        features_list.append(features)
+        targets_list.append(targets)
+
+    return features_list, targets_list
+
+
+def concat_1st_axis(list1, list2):
+    return np.concatenate(list1, axis=0), np.concatenate(list2, axis=0)
+
+
+
 def train_model(train_data, test_data, is_grid_search_cv):
     grid_search_results = None
     print("Training...")
@@ -41,16 +57,8 @@ def train_model(train_data, test_data, is_grid_search_cv):
         print("Starting Grid Search...")
         training_dataset = TrainingDataset(train_data)
 
-        train_features = []
-        train_targets = []
-
-        for index in range(len(training_dataset)):
-            input_array, target_array = training_dataset[index]
-            train_features.append(input_array)
-            train_targets.append(target_array)
-
-        train_features_np = np.concatenate(train_features, axis=0)
-        train_targets_np = np.concatenate(train_targets, axis=0)
+        train_features, train_targets = extract_features_and_targets_from_dataset(training_dataset)
+        train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
 
         model = DecisionTreeRegressor()
         cv = KFold(n_splits=5, shuffle=True, random_state=42)  # TODO best n_split?
@@ -79,15 +87,8 @@ def train_model(train_data, test_data, is_grid_search_cv):
                                       max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes,
                                       random_state=42)
 
-        train_features = []
-        train_targets = []
-        for index in range(len(training_dataset)):
-            input_array, target_array = training_dataset[index]
-            train_features.append(input_array)
-            train_targets.append(target_array)
-
-        train_features_np = np.concatenate(train_features, axis=0)
-        train_targets_np = np.concatenate(train_targets, axis=0)
+        train_features, train_targets = extract_features_and_targets_from_dataset(training_dataset)
+        train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
 
         model.fit(train_features_np, train_targets_np)
 
@@ -97,16 +98,9 @@ def train_model(train_data, test_data, is_grid_search_cv):
 def evaluate_model(model, test_data, grid_search_results=None):
     print("Evaluating...")
     test_dataset = TrainingDataset(test_data)
-    test_features = []
-    test_targets = []
 
-    for index in range(len(test_dataset)):
-        test_input_array, test_target_array = test_dataset[index]
-        test_features.append(test_input_array)
-        test_targets.append(test_target_array)
-
-    test_features_np = np.concatenate(test_features, axis=0)
-    test_targets_np = np.concatenate(test_targets, axis=0)
+    test_features, test_targets = extract_features_and_targets_from_dataset(test_dataset)
+    test_features_np, test_targets_np = concat_1st_axis(test_features, test_targets)
 
     model.fit(test_features_np, test_targets_np)
 
