@@ -3,12 +3,12 @@ from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.tree import DecisionTreeRegressor
 from machine_learning.prepare_for_training import TrainingDataset
 from sklearn.metrics import mean_squared_error
-from machine_learning.config import HPConfig, BestHPConfig, GridSearchConfig
+from machine_learning.config import HPConfig, GridSearchConfig
 from sklearn.metrics import make_scorer
-from machine_learning.log import log_score
+from machine_learning.grid_search_logs.log import log_score
 
 
-def rmse(true, predicted): #order of params important!
+def rmse(true, predicted):  # order of params important!
     return np.sqrt(mean_squared_error(true, predicted))
 
 
