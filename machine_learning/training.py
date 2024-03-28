@@ -34,7 +34,7 @@ def custom_scoring(true_labels, predicted_labels):
 custom_scoring = make_scorer(custom_scoring, greater_is_better=False)
 
 
-def extract_features_and_targets_from_dataset(dataset):
+def extract_features_and_targets(dataset):
     features_list = []
     targets_list = []
     for index in range(len(dataset)):
@@ -49,15 +49,14 @@ def concat_1st_axis(list1, list2):
     return np.concatenate(list1, axis=0), np.concatenate(list2, axis=0)
 
 
-
-def train_model(train_data, test_data, is_grid_search_cv):
+def train_model(train_data, test_data, use_grid_search):
     grid_search_results = None
     print("Training...")
-    if is_grid_search_cv:
+    if use_grid_search:
         print("Starting Grid Search...")
         training_dataset = TrainingDataset(train_data)
 
-        train_features, train_targets = extract_features_and_targets_from_dataset(training_dataset)
+        train_features, train_targets = extract_features_and_targets(training_dataset)
         train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
 
         model = DecisionTreeRegressor()
@@ -87,7 +86,7 @@ def train_model(train_data, test_data, is_grid_search_cv):
                                       max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes,
                                       random_state=42)
 
-        train_features, train_targets = extract_features_and_targets_from_dataset(training_dataset)
+        train_features, train_targets = extract_features_and_targets(training_dataset)
         train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
 
         model.fit(train_features_np, train_targets_np)
@@ -99,7 +98,7 @@ def evaluate_model(model, test_data, grid_search_results=None):
     print("Evaluating...")
     test_dataset = TrainingDataset(test_data)
 
-    test_features, test_targets = extract_features_and_targets_from_dataset(test_dataset)
+    test_features, test_targets = extract_features_and_targets(test_dataset)
     test_features_np, test_targets_np = concat_1st_axis(test_features, test_targets)
 
     model.fit(test_features_np, test_targets_np)
