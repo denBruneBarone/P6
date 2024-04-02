@@ -25,13 +25,18 @@ def cum_power(true_power, predicted_power, time_diff):
     return true_cum_power, predicted_cum_power
 
 
-def custom_scoring(true_labels, predicted_labels):
+def custom_scoring_power(true_labels, predicted_labels):
     true_power, predicted_power = power(true_labels, predicted_labels)
     return rmse(true_power, predicted_power)
 
+def custom_scoring_og(y_true, y_pred):
+    rmse_current = rmse(y_true[:, 0], y_pred[:, 0])
+    rmse_voltage = rmse(y_true[:, 1], y_pred[:, 1])
+    return (rmse_current + rmse_voltage) / 2
+
 
 # greater_is_better=False sign-swaps the result!
-custom_scoring = make_scorer(custom_scoring, greater_is_better=False)
+custom_scoring = make_scorer(custom_scoring_og, greater_is_better=False)
 
 
 def extract_features_and_targets(dataset):
