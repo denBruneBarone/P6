@@ -5,6 +5,7 @@ class Workspace:
     def __init__(self, dimensions, max_bounds):
         self.dimensions = dimensions
         self.max_bounds = max_bounds
+        self.flight_paths = []
         self.blockages = []
 
     def add_blockage(self, blockage_matrix, position):
@@ -17,7 +18,10 @@ class Workspace:
                 raise ValueError(f"Blockage does not fit within the space dimensions")
         self.blockages.append((blockage_matrix, position))
 
-    def plot_space(self, dimension='3D', flight_path=None):
+    def add_flight_path(self, flight_path):
+        self.flight_paths.append(flight_path)
+
+    def plot_space(self, dimension='3D'):
         if dimension == '3D':
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -30,8 +34,8 @@ class Workspace:
                 x, y, z = position
                 ax.bar3d(x, y, z, *blockage_matrix.shape, color='r', alpha=0.5)
 
-            # Plot flight path
-            if flight_path is not None:
+            # Plot flight paths
+            for flight_path in self.flight_paths:
                 xs, ys, zs = zip(*flight_path)
                 ax.plot(xs, ys, zs, color='b', alpha=0.5)
 
@@ -54,8 +58,8 @@ class Workspace:
                 x, y = position[:2]
                 ax.add_patch(plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='r'))
 
-            # Plot flight path
-            if flight_path is not None:
+            # Plot flight paths
+            for flight_path in self.flight_paths:
                 xs, ys, _ = zip(*flight_path)  # Ignore z-coordinate for 2D plot
                 ax.plot(xs, ys, color='b', alpha=0.7, linewidth=2)
 
