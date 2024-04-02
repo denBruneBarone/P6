@@ -2,41 +2,41 @@ import numpy as np
 from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.tree import DecisionTreeRegressor
 from machine_learning.prepare_for_training import TrainingDataset
-from sklearn.metrics import mean_squared_error
 from machine_learning.config import HPConfig, GridSearchConfig
-from sklearn.metrics import make_scorer
+from sklearn.metrics import make_scorer, mean_squared_error, mean_absolute_error
 from machine_learning.grid_search_logs.log import log_score
+import pandas as pd
 
 
 def rmse(true, predicted):  # order of params important!
     return np.sqrt(mean_squared_error(true, predicted))
 
 
+def mae(true, predicted):
+    return mean_absolute_error(true, predicted)
+
+
 def power(true_labels, predicted_labels):
-    true_power = predicted_labels[:, 0] * predicted_labels[:, 1]
-    predicted_power = true_labels[:, 0] * true_labels[:, 1]
+    true_power = true_labels[:, 0] * true_labels[:, 1]
+    predicted_power = predicted_labels[:, 0] * predicted_labels[:, 1]
 
     return true_power, predicted_power
 
 
-def cum_power(true_power, predicted_power, time_diff):
-    true_cum_power = np.cumsum(true_power * time_diff)
-    predicted_cum_power = np.cumsum(predicted_power * time_diff)
-    return true_cum_power, predicted_cum_power
-
-
-def custom_scoring_power(true_labels, predicted_labels):
-    true_power, predicted_power = power(true_labels, predicted_labels)
-    return rmse(true_power, predicted_power)
-
-def custom_scoring_og(y_true, y_pred):
+def custom_scoring_rmse(y_true, y_pred):
     rmse_current = rmse(y_true[:, 0], y_pred[:, 0])
     rmse_voltage = rmse(y_true[:, 1], y_pred[:, 1])
     return (rmse_current + rmse_voltage) / 2
 
 
+def custom_scoring_mae(y_true, y_pred):
+    mae_current = mean_absolute_error(y_true[:, 0], y_pred[:, 0])
+    mae_voltage = mean_absolute_error(y_true[:, 1], y_pred[:, 1])
+    return (mae_current + mae_voltage) / 2
+
+
 # greater_is_better=False sign-swaps the result!
-custom_scoring = make_scorer(custom_scoring_og, greater_is_better=False)
+custom_scoring = make_scorer(custom_scoring_mae, greater_is_better=False)
 
 
 def extract_features_and_targets(dataset):
@@ -100,6 +100,7 @@ def train_model(train_data, test_data, use_grid_search):
 
 
 def evaluate_model(model, test_data, grid_search_results=None):
+    filename = 'evaluation_results.xlsx'
     print("Evaluating...")
     test_dataset = TrainingDataset(test_data)
 
@@ -109,20 +110,32 @@ def evaluate_model(model, test_data, grid_search_results=None):
     model.fit(test_features_np, test_targets_np)
 
     test_predictions = model.predict(test_features_np)
-    rmse_targets = rmse(test_targets_np, test_predictions)
-    print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {rmse_targets}")
 
+    # Calculate true and predicted power
     true_power, predicted_power = power(test_targets_np, test_predictions)
-    rmse_power = rmse(true_power, predicted_power)
-    print(f"Test Root Mean Squared Error (RMSE) for Power: {rmse_power}")
+    print("True Power:", true_power)
+    print("Predicted", predicted_power)
 
-    time_diff = np.diff(test_features_np[:, 0], prepend=0)
-    true_cum_power, predicted_cum_power = cum_power(true_power, predicted_power, time_diff)
-    rmse_cum_power = rmse(true_cum_power, predicted_cum_power)
-    print(f"Test Mean Squared Error (RMSE) for Cumulative Power: {rmse_cum_power}")
-    print("Evaluation finished!")
+    mae = mean_absolute_error(test_targets_np, test_predictions)
+    mae_power = mean_absolute_error(true_power, predicted_power)
+    print("Mean Absolute Error:", mae)
+    print("Mean Absolute Error Power :", mae_power)
 
-    if grid_search_results is not None:
-        log_score(grid_search_results['score'], rmse_targets, rmse_power, rmse_cum_power, grid_search_results['params'])
+
+    # Create a DataFrame to store the data
+    df = pd.DataFrame({
+        'True Current': test_targets_np[:, 0],
+        'True Voltage': test_targets_np[:, 1],
+        'True Power': true_power,
+        'Predicted Voltage': test_predictions[:, 0],
+        'Predicted Current': test_predictions[:, 1],
+        'Predicted Power': predicted_power,
+    })
+
+    # Write data to Excel file
+    with pd.ExcelWriter(filename) as writer:
+        df.to_excel(writer, index=False, sheet_name='Data')
+
+    print(f"Evaluation results saved to {filename}")
 
     return model
