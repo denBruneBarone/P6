@@ -99,8 +99,7 @@ def train_model(train_data, test_data, use_grid_search):
     return evaluate_model(model, test_data, grid_search_results)
 
 
-def evaluate_model(model, test_data, grid_search_results=None):
-    filename = 'evaluation_results.xlsx'
+def evaluate_model(model, test_data, grid_search_results=None, save_predictions_in_excel=False):
     print("Evaluating...")
     test_dataset = TrainingDataset(test_data)
 
@@ -111,31 +110,37 @@ def evaluate_model(model, test_data, grid_search_results=None):
 
     test_predictions = model.predict(test_features_np)
 
+    rmse_targets = rmse(test_targets_np, test_predictions)
+    mae_targets = mae(test_targets_np, test_predictions)
+    print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {rmse_targets}")
+    print(f"Test Mean Absolute Error (MAE) for Voltage and Current: {mae_targets}")
+
     # Calculate true and predicted power
     true_power, predicted_power = power(test_targets_np, test_predictions)
-    print("True Power:", true_power)
-    print("Predicted", predicted_power)
-
-    mae = mean_absolute_error(test_targets_np, test_predictions)
+    rmse_power = rmse(true_power, predicted_power)
     mae_power = mean_absolute_error(true_power, predicted_power)
-    print("Mean Absolute Error:", mae)
-    print("Mean Absolute Error Power :", mae_power)
+    print("Test Root Mean Squared Error (RMSE) for Power:", rmse_power)
+    print("Test Mean Absolute Error (MAE) for Power :", mae_power)
 
 
     # Create a DataFrame to store the data
-    df = pd.DataFrame({
-        'True Current': test_targets_np[:, 0],
-        'True Voltage': test_targets_np[:, 1],
-        'True Power': true_power,
-        'Predicted Voltage': test_predictions[:, 0],
-        'Predicted Current': test_predictions[:, 1],
-        'Predicted Power': predicted_power,
-    })
+    if save_predictions_in_excel:
+        df = pd.DataFrame({
+            'True Current': test_targets_np[:, 0],
+            'True Voltage': test_targets_np[:, 1],
+            'True Power': true_power,
+            'Predicted Voltage': test_predictions[:, 0],
+            'Predicted Current': test_predictions[:, 1],
+            'Predicted Power': predicted_power,
+        })
 
-    # Write data to Excel file
-    with pd.ExcelWriter(filename) as writer:
-        df.to_excel(writer, index=False, sheet_name='Data')
+        filename = 'evaluation_results.xlsx'
+        # Write data to Excel file
+        with pd.ExcelWriter(filename) as writer:
+            df.to_excel(writer, index=False, sheet_name='Data')
 
-    print(f"Evaluation results saved to {filename}")
+        print(f"Evaluation results saved to {filename}")
 
+    if grid_search_results is not None:
+        log_score(grid_search_results['score'], rmse_targets, mae_targets, rmse_power, mae_power, grid_search_results['params'])
     return model
