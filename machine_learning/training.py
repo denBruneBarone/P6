@@ -2,10 +2,10 @@ import numpy as np
 from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.tree import DecisionTreeRegressor
 from machine_learning.prepare_for_training import TrainingDataset
+from machine_learning.logs.predictions_to_excel import predictions_to_excel
 from machine_learning.config import HPConfig, GridSearchConfig
 from sklearn.metrics import make_scorer, mean_squared_error, mean_absolute_error
-from machine_learning.grid_search_logs.log import log_score
-import pandas as pd
+from machine_learning.logs.hp_to_csv import hp_to_csv
 
 
 def rmse(true, predicted):  # order of params important!
@@ -15,6 +15,18 @@ def rmse(true, predicted):  # order of params important!
 def mae(true, predicted):
     return mean_absolute_error(true, predicted)
 
+
+def mape(true, predicted):
+    absolute_percentage_errors = np.abs((true - predicted) / true) * 100
+    return np.mean(absolute_percentage_errors)
+
+
+def percentage_accuracy(true, predicted):
+    mae_score = mae(true, predicted)
+    target_range = np.max(true) - np.min(true)
+    normalized_mae = mae_score / target_range
+    percentage_accuracy_score = (1 - normalized_mae) * 100
+    return percentage_accuracy_score
 
 def power(true_labels, predicted_labels):
     true_power = true_labels[:, 0] * true_labels[:, 1]
@@ -99,7 +111,7 @@ def train_model(train_data, test_data, use_grid_search):
     return evaluate_model(model, test_data, grid_search_results)
 
 
-def evaluate_model(model, test_data, grid_search_results=None, save_predictions_in_excel=False):
+def evaluate_model(model, test_data, grid_search_results=None, save_predictions_in_excel=True):
     print("Evaluating...")
     test_dataset = TrainingDataset(test_data)
 
@@ -112,35 +124,22 @@ def evaluate_model(model, test_data, grid_search_results=None, save_predictions_
 
     rmse_targets = rmse(test_targets_np, test_predictions)
     mae_targets = mae(test_targets_np, test_predictions)
+    pa_targets = percentage_accuracy(test_targets_np, test_predictions)
     print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {rmse_targets}")
     print(f"Test Mean Absolute Error (MAE) for Voltage and Current: {mae_targets}")
+    print(f"Test Percentage Accuracy (PA) for Voltage and Current: {pa_targets}")
 
-    # Calculate true and predicted power
     true_power, predicted_power = power(test_targets_np, test_predictions)
     rmse_power = rmse(true_power, predicted_power)
     mae_power = mean_absolute_error(true_power, predicted_power)
+    pa_power = percentage_accuracy(true_power, predicted_power)
     print("Test Root Mean Squared Error (RMSE) for Power:", rmse_power)
     print("Test Mean Absolute Error (MAE) for Power :", mae_power)
+    print("Test Percentage Accuracy (PA) for Power:", pa_power)
 
-
-    # Create a DataFrame to store the data
     if save_predictions_in_excel:
-        df = pd.DataFrame({
-            'True Current': test_targets_np[:, 0],
-            'True Voltage': test_targets_np[:, 1],
-            'True Power': true_power,
-            'Predicted Voltage': test_predictions[:, 0],
-            'Predicted Current': test_predictions[:, 1],
-            'Predicted Power': predicted_power,
-        })
-
-        filename = 'evaluation_results.xlsx'
-        # Write data to Excel file
-        with pd.ExcelWriter(filename) as writer:
-            df.to_excel(writer, index=False, sheet_name='Data')
-
-        print(f"Evaluation results saved to {filename}")
+        predictions_to_excel(test_targets_np, test_predictions, true_power, predicted_power)
 
     if grid_search_results is not None:
-        log_score(grid_search_results['score'], rmse_targets, mae_targets, rmse_power, mae_power, grid_search_results['params'])
+        hp_to_csv(grid_search_results['score'], rmse_targets, mae_targets, pa_targets, rmse_power, mae_power, pa_power, grid_search_results['params'])
     return model
