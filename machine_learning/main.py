@@ -32,6 +32,7 @@ def train():
         print("Saving trained model...")
         with open(MODEL_FILE_PATH, 'wb') as model_file:
             pickle.dump(model, model_file)
+        print("Model saved in " + MODEL_FILE_PATH)
 
 
 if __name__ == "__main__":
