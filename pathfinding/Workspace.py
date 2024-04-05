@@ -21,9 +21,17 @@ class Workspace:
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)
 
-    def plot_space(self, dimension='3D'):
+    def plot_space(self, dimension='3D', dpi=300):
         if dimension == '3D':
-            fig = plt.figure()
+            '''
+            The code below: iterates over each flight path and extracts the x, y, and z coordinates.
+            Then, it breaks down each flight path into segments.
+            For each segment, it checks if there is any intersection with any blockage by calling the check_segment_intersects_blockage method.
+            If any segment intersects with any blockage, it plots that segment in orange (color='orange') and then continues to the next segment.
+            If a segment does not intersect with any blockage, it plots it in blue (color='b').
+            This process continues until all segments of the flight path have been processed.
+            '''
+            fig = plt.figure(dpi=dpi)
             ax = fig.add_subplot(111, projection='3d')
 
             # Plot origin
@@ -37,7 +45,25 @@ class Workspace:
             # Plot flight paths
             for flight_path in self.flight_paths:
                 xs, ys, zs = zip(*flight_path)
-                ax.plot(xs, ys, zs, color='b', alpha=0.5)
+
+                # Iterate over each segment of the flight path
+                for i in range(len(xs) - 1):
+                    # Extract coordinates for the current segment
+                    x_coords = [xs[i], xs[i + 1]]
+                    y_coords = [ys[i], ys[i + 1]]
+                    z_coords = [zs[i], zs[i + 1]]
+
+                    # Check if the current segment intersects with any blockage
+                    segment_intersects = any(
+                        self.check_segment_intersects_blockage(x_coords, y_coords, z_coords, blockage)
+                        for blockage in self.blockages
+                    )
+
+                    # Plot the segment in the appropriate color
+                    if segment_intersects:
+                        ax.plot(x_coords, y_coords, z_coords, color='y', alpha=0.5)
+                    else:
+                        ax.plot(x_coords, y_coords, z_coords, color='b', alpha=0.5)
 
             # Set labels and limits
             ax.set_xlabel('X')
@@ -48,7 +74,7 @@ class Workspace:
             ax.set_zlim([0, self.max_bounds[2]])
 
         elif dimension == '2D':
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(dpi=dpi)
 
             # Plot origin
             ax.scatter(0, 0, color='k')
@@ -60,8 +86,25 @@ class Workspace:
 
             # Plot flight paths
             for flight_path in self.flight_paths:
-                xs, ys, _ = zip(*flight_path)  # Ignore z-coordinate for 2D plot
-                ax.plot(xs, ys, color='b', alpha=0.7, linewidth=2)
+                xs, ys, _ = zip(*flight_path)
+
+                # Iterate over each segment of the flight path
+                for i in range(len(xs) - 1):
+                    # Extract coordinates for the current segment
+                    x_coords = [xs[i], xs[i + 1]]
+                    y_coords = [ys[i], ys[i + 1]]
+
+                    # Check if the current segment intersects with any blockage
+                    segment_intersects = any(
+                        self.check_segment_intersects_blockage(x_coords, y_coords, None, blockage)
+                        for blockage in self.blockages
+                    )
+
+                    # Plot the segment in the appropriate color
+                    if segment_intersects:
+                        ax.plot(x_coords, y_coords, color='y', alpha=0.5)
+                    else:
+                        ax.plot(x_coords, y_coords, color='b', alpha=0.5)
 
             # Set labels and limits
             ax.set_xlabel('X')
@@ -70,5 +113,36 @@ class Workspace:
             ax.set_ylim([0, self.max_bounds[1]])
             ax.set_aspect('equal', adjustable='box')
             ax.grid(True)
-
         plt.show()
+
+    def check_segment_intersects_blockage(self, xs, ys, zs, blockage):
+        if zs is not None:
+            for i in range(len(xs) - 1):
+                if (
+                        (blockage[1][0] <= xs[i] < blockage[1][0] + blockage[0].shape[0] and
+                         blockage[1][1] <= ys[i] < blockage[1][1] + blockage[0].shape[1] and
+                         blockage[1][2] <= zs[i] < blockage[1][2] + blockage[0].shape[2])
+                        or
+                        (blockage[1][0] <= xs[i + 1] < blockage[1][0] + blockage[0].shape[0] and
+                         blockage[1][1] <= ys[i + 1] < blockage[1][1] + blockage[0].shape[1] and
+                         blockage[1][2] <= zs[i + 1] < blockage[1][2] + blockage[0].shape[2])
+                ):
+                    print('Collision in 3D Block found')
+                    return True
+            return False
+        else:
+            for i in range(len(xs) - 1):
+                # Accessing the first zero'th element of the 1st list. That is (30,30,0) -> 30 (The blockages position)
+                if (
+                        # Checking if a given point collides with the blockage's position(start) and position+size(end)
+                        (blockage[1][0] <= xs[i] < blockage[1][0] + blockage[0].shape[0] and
+                         blockage[1][1] <= ys[i] < blockage[1][1] + blockage[0].shape[1])
+                        or
+                        (blockage[1][0] <= xs[i + 1] < blockage[1][0] + blockage[0].shape[0] and
+                         blockage[1][1] <= ys[i + 1] < blockage[1][1] + blockage[0].shape[1])
+                ):
+                    print('Collision in 2D Block found')
+                    return True
+            return
+        # True: intersection between segment and blockage
+        # False: No intersection between segment and blockage
