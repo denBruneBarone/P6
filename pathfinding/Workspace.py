@@ -40,7 +40,8 @@ class Workspace:
             # Plot blockages
             for blockage_matrix, position in self.blockages:
                 x, y, z = position
-                ax.bar3d(x, y, z, *blockage_matrix.shape, color='r', alpha=0.5)
+                ax.bar3d(x, y, z, *blockage_matrix.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5)
+
 
             # Plot flight paths
             for flight_path in self.flight_paths:
@@ -61,9 +62,9 @@ class Workspace:
 
                     # Plot the segment in the appropriate color
                     if segment_intersects:
-                        ax.plot(x_coords, y_coords, z_coords, color='y', alpha=0.5)
+                        ax.plot(x_coords, y_coords, z_coords, color='r', alpha=0.5)
                     else:
-                        ax.plot(x_coords, y_coords, z_coords, color='b', alpha=0.5)
+                        ax.plot(x_coords, y_coords, z_coords, color='g', alpha=0.5)
 
             # Set labels and limits
             ax.set_xlabel('X')
@@ -82,7 +83,7 @@ class Workspace:
             # Plot blockages
             for blockage_matrix, position in self.blockages:
                 x, y = position[:2]
-                ax.add_patch(plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='r'))
+                ax.add_patch(plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='k'))
 
             # Plot flight paths
             for flight_path in self.flight_paths:
@@ -102,9 +103,9 @@ class Workspace:
 
                     # Plot the segment in the appropriate color
                     if segment_intersects:
-                        ax.plot(x_coords, y_coords, color='y', alpha=0.5)
+                        ax.plot(x_coords, y_coords, color='r', alpha=0.5)
                     else:
-                        ax.plot(x_coords, y_coords, color='b', alpha=0.5)
+                        ax.plot(x_coords, y_coords, color='g', alpha=0.5)
 
             # Set labels and limits
             ax.set_xlabel('X')
@@ -112,7 +113,7 @@ class Workspace:
             ax.set_xlim([0, self.max_bounds[0]])
             ax.set_ylim([0, self.max_bounds[1]])
             ax.set_aspect('equal', adjustable='box')
-            ax.grid(True)
+            ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
     def check_segment_intersects_blockage(self, xs, ys, zs, blockage):
