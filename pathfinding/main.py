@@ -5,7 +5,7 @@ import numpy as np
 
 def generate_random_path(workspace):
     # Define dimensions of the 3D space
-    space_dimensions = (100, 100, 50)
+    space_dimensions = (400, 400, 60)
 
     # Access blockages directly from the workspace
     blockages = workspace.blockages
@@ -46,7 +46,7 @@ def generate_random_path(workspace):
 def setup_workspace():
     # Example usage
     dimensions = 3  # Define a 3-dimensional space
-    max_bounds = [100, 100, 50]  # Define maximum bounds for each dimension
+    max_bounds = [400, 400, 60]  # Define maximum bounds for each dimension
 
     space = Workspace(dimensions, max_bounds)
 
@@ -67,7 +67,7 @@ def setup_workspace():
 
 def find_and_show_optimal_path():
     workspace = setup_workspace()
-    mission = Mission((0, 0, 0), (50, 50, 0), 500)
+    mission = Mission((0, 0, 0), (400, 400, 0), 500)
 
     flight_path = workspace.find_optimal_path(mission)
     # flight_path = generate_random_path(workspace)

@@ -158,12 +158,19 @@ class Workspace:
         # False: No intersection between segment and blockage
 
     def find_optimal_path(self, mission):
-        print('hello world')
+        print('find optimal path')
         # Maybe here call plot_space to show the workspace
+        start = mission.start
+        end = mission.end
+        payload = mission.payload
+        blockages = self.blockages
+        wind_field = self.wind_field
 
-        flight_path = [(0, 0, 0), (5, 5, 0), (10, 10, 0), (15, 15, 0), (20, 20, 0), (25, 25, 0), (30, 30, 0),
+
+
+
+        path_example = [(0, 0, 0), (5, 5, 0), (10, 10, 0), (15, 15, 0), (20, 20, 0), (25, 25, 0), (30, 30, 0),
                        (35, 35, 0),
-                       (40, 40, 0), (45, 45, 0), (50, 50, 0), (55, 55, 0), (60, 60, 0), (65, 65, 0), (70, 70, 0),
-                       (75, 75, 0), (80, 80, 0)]
-
-        return flight_path
+                       (40, 40, 0), (45, 45, 0), (50, 50, 0)]
+        path = path_example
+        return path
