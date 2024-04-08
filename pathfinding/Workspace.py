@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import heapq
+from pathfinding.Node import Node
 
 
 class Workspace:
@@ -159,18 +161,53 @@ class Workspace:
 
     def find_optimal_path(self, mission):
         print('find optimal path')
-        # Maybe here call plot_space to show the workspace
-        start = mission.start
-        end = mission.end
+        # TODO: Caspar: Maybe here call plot_space to show the workspace
+        start_node = Node(*mission.start)
+        end_node = Node(*mission.end)
         payload = mission.payload
         blockages = self.blockages
         wind_field = self.wind_field
 
+        def get_neighbors(node):
+            neighbors = []
 
+            for dist_x, dist_y, dist_z in [(20, 0, 0), (-20, 0, 0), (0, 20, 0), (0, -20, 0), (0, 0, 3), (0, 0, -3)]:
+                new_x = node.x + dist_x
+                new_y = node.y + dist_y
+                new_z = node.z + dist_z
+                new_node = Node(new_x, new_y, new_z)
+                if new_node not in blockages:
+                    neighbors.append(new_node)
+            return neighbors
 
+        # TODO: Rune og Lucas: dist_x + dist_y <= 20, dist_z <= 3  --- se paper side 8 afsnit b
+        def distance(node1, node2):
+            dist_x = abs(node1.x - node2.x)
+            dist_y = abs(node1.y - node2.y)
+            dist_z = abs(node1.z - node2.z)
+            return dist_x + dist_y + dist_z
+
+        def heuristic(node):
+            return distance(node, end_node)
+
+        pq = [(heuristic(start_node), start_node)]
+
+        while pq:
+            _, current = heapq.heappop(pq)
+
+            if current == end_node:
+                break
+
+            for neighbor in get_neighbors(current):
+                # Calculate new distance to neighbor
+                new_dist = distance(start_node, current) + distance(current, neighbor)
+                # Calculate new heuristic value for neighbor
+                neighbor_heuristic = new_dist + heuristic(neighbor)
+                # Push neighbor to priority queue with its heuristic value
+                heapq.heappush(pq, (neighbor_heuristic, neighbor))
 
         path_example = [(0, 0, 0), (5, 5, 0), (10, 10, 0), (15, 15, 0), (20, 20, 0), (25, 25, 0), (30, 30, 0),
                        (35, 35, 0),
-                       (40, 40, 0), (45, 45, 0), (50, 50, 0)]
+                       (40, 40, 0), (45, 45, 0), (50, 50, 0), (400,400, 0)]
         path = path_example
         return path
