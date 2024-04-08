@@ -142,4 +142,5 @@ def evaluate_model(model, test_data, grid_search_results=None, save_predictions_
 
     if grid_search_results is not None:
         hp_to_csv(grid_search_results['score'], rmse_targets, mae_targets, pa_targets, rmse_power, mae_power, pa_power, grid_search_results['params'])
+
     return model
