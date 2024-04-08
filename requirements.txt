@@ -6,3 +6,6 @@
 
 #Machine Learning
 -r machine_learning/requirements.txt
+
+#Pathfinding
+-r pathfinding/requirements.txt
