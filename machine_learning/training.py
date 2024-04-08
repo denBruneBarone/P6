@@ -5,59 +5,80 @@ from machine_learning.prepare_for_training import TrainingDataset
 from sklearn.metrics import mean_squared_error
 from machine_learning.config import HPConfig, GridSearchConfig
 from sklearn.metrics import make_scorer
+from machine_learning.grid_search_logs.log import log_score
 
 
-def rmse_cum_power(true_labels, predicted_labels):
-    time_diff = np.diff(true_labels[:, 0], prepend=0)
-    true_cumulative_power = np.cumsum(predicted_labels[:, 0] * predicted_labels[:, 1] * time_diff)
-    test_targets_cumulative_power = np.cumsum(true_labels[:, 0] * true_labels[:, 1] * time_diff)
+def rmse(true, predicted):  # order of params important!
+    return np.sqrt(mean_squared_error(true, predicted))
 
-    rmse = np.sqrt(mean_squared_error(test_targets_cumulative_power, true_cumulative_power))
-    return rmse
+
+def power(true_labels, predicted_labels):
+    true_power = predicted_labels[:, 0] * predicted_labels[:, 1]
+    predicted_power = true_labels[:, 0] * true_labels[:, 1]
+
+    return true_power, predicted_power
+
+
+def cum_power(true_power, predicted_power, time_diff):
+    true_cum_power = np.cumsum(true_power * time_diff)
+    predicted_cum_power = np.cumsum(predicted_power * time_diff)
+    return true_cum_power, predicted_cum_power
 
 
 def custom_scoring(true_labels, predicted_labels):
-    return rmse_cum_power(true_labels, predicted_labels)
+    true_power, predicted_power = power(true_labels, predicted_labels)
+    return rmse(true_power, predicted_power)
 
-custom_scoring = make_scorer(custom_scoring)
+
+# greater_is_better=False sign-swaps the result!
+custom_scoring = make_scorer(custom_scoring, greater_is_better=False)
 
 
-def train_model(train_data, grid_search_cv=True):
-    if grid_search_cv:
+def extract_features_and_targets(dataset):
+    features_list = []
+    targets_list = []
+    for index in range(len(dataset)):
+        features, targets = dataset[index]
+        features_list.append(features)
+        targets_list.append(targets)
+
+    return features_list, targets_list
+
+
+def concat_1st_axis(list1, list2):
+    return np.concatenate(list1, axis=0), np.concatenate(list2, axis=0)
+
+
+def train_model(train_data, test_data, use_grid_search):
+    grid_search_results = None
+    print("Training...")
+    if use_grid_search:
+        print("Starting Grid Search...")
         training_dataset = TrainingDataset(train_data)
 
-        # Instantiate the decision tree model with specified hyperparameters
+        train_features, train_targets = extract_features_and_targets(training_dataset)
+        train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
+
         model = DecisionTreeRegressor()
-        # splits the train-test data into n_splits number of subsets for cross validation
         cv = KFold(n_splits=5, shuffle=True, random_state=42)  # TODO best n_split?
         grid_search = GridSearchCV(estimator=model, param_grid=GridSearchConfig.param_grid,
                                    cv=cv, scoring=custom_scoring, verbose=2)
 
-        train_features = []
-        train_targets = []
-
-        for index in range(len(training_dataset)):
-            input_array, target_array = training_dataset[index]
-            train_features.append(input_array)
-            train_targets.append(target_array)
-
-        # Concatenate the lists along the appropriate axis
-        train_features_np = np.concatenate(train_features, axis=0)
-        train_targets_np = np.concatenate(train_targets, axis=0)
-
-        # Fit the decision tree model
         grid_search.fit(train_features_np, train_targets_np)
         best_params = grid_search.best_params_
-        best_score = grid_search.best_score_
+        best_score = abs(grid_search.best_score_) #abs because of GreaterIsBetter
 
         print("Best Params: ", best_params)
         print("Best score: ", best_score)
+        grid_search_results = {"score": best_score, "params": dict(best_params)}
 
-        best_dt_model = grid_search.best_estimator_
-        best_dt_model.fit(train_features_np, train_targets_np)
-        # TODO: Tilføj print detaljer
+        model = grid_search.best_estimator_
+
+        model.fit(train_features_np, train_targets_np)
+        # TODO: Tilføj print detaljer?
 
     else:
+        print("Training without GridSearch...")
         training_dataset = TrainingDataset(train_data)
 
         # Instantiate the decision tree model with specified hyperparameters
@@ -65,72 +86,38 @@ def train_model(train_data, grid_search_cv=True):
                                       max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes,
                                       random_state=42)
 
-        # Extract features and targets from the training dataset
-        train_features = []
-        train_targets = []
-        for index in range(len(training_dataset)):
-            input_array, target_array = training_dataset[index]
-            train_features.append(input_array)
-            train_targets.append(target_array)
+        train_features, train_targets = extract_features_and_targets(training_dataset)
+        train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
 
-        # Concatenate the lists along the appropriate axis
-        train_features_np = np.concatenate(train_features, axis=0)
-        train_targets_np = np.concatenate(train_targets, axis=0)
-
-        # Fit the decision tree model
         model.fit(train_features_np, train_targets_np)
 
-    return model
+    return evaluate_model(model, test_data, grid_search_results)
 
 
-def evaluate_model(model, test_data):
+def evaluate_model(model, test_data, grid_search_results=None):
+    print("Evaluating...")
     test_dataset = TrainingDataset(test_data)
 
-    print("Evaluating...")
-    # Extract features and targets from the test dataset
-    test_features = []
-    test_targets = []
-    for index in range(len(test_dataset)):
-        test_input_array, test_target_array = test_dataset[index]
-        test_features.append(test_input_array)
-        test_targets.append(test_target_array)
-
-    # Concatenate the lists along the appropriate axis
-    test_features_np = np.concatenate(test_features, axis=0)
-    test_targets_np = np.concatenate(test_targets, axis=0)
+    test_features, test_targets = extract_features_and_targets(test_dataset)
+    test_features_np, test_targets_np = concat_1st_axis(test_features, test_targets)
 
     model.fit(test_features_np, test_targets_np)
 
-    # Predict on the test set
     test_predictions = model.predict(test_features_np)
+    rmse_targets = rmse(test_targets_np, test_predictions)
+    print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {rmse_targets}")
 
-    # Calculate RMSE for the two output parameters
-    test_rmse = np.sqrt(mean_squared_error(test_targets_np, test_predictions))
-    print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {test_rmse}")
+    true_power, predicted_power = power(test_targets_np, test_predictions)
+    rmse_power = rmse(true_power, predicted_power)
+    print(f"Test Root Mean Squared Error (RMSE) for Power: {rmse_power}")
 
-    # Calculate power consumption predictions by multiplying voltage and current predictions
-    power_consumption_predictions = test_predictions[:, 0] * test_predictions[:, 1]
-
-    # Calculate the time difference between each timestamp
     time_diff = np.diff(test_features_np[:, 0], prepend=0)
-
-    # Adjust power consumption predictions by multiplying with the time difference
-    adjusted_power_consumption = power_consumption_predictions * time_diff
-
-    # Calculate cumulative power consumption for each flight
-    cumulative_power = np.cumsum(adjusted_power_consumption)
-
-    # Calculate RMSE on the original cumulative power for the test set
-    test_targets_cumulative_power = np.cumsum(test_targets_np[:, 0] * test_targets_np[:, 1] * time_diff)
-    original_test_rmse = np.sqrt(mean_squared_error(test_targets_cumulative_power, cumulative_power))
-
-    print(f"Original Test Root Mean Squared Error (RMSE) for Cumulative Power: {original_test_rmse}")
-
-    # Calculate RMSE on the adjusted cumulative power for the test set
-    test_rmse = np.sqrt(
-        mean_squared_error(test_targets_np[:, 0] * test_targets_np[:, 1], power_consumption_predictions))
-    print(f"Adjusted Test Root Mean Squared Error (RMSE) for Cumulative Power: {test_rmse}")
-
+    true_cum_power, predicted_cum_power = cum_power(true_power, predicted_power, time_diff)
+    rmse_cum_power = rmse(true_cum_power, predicted_cum_power)
+    print(f"Test Mean Squared Error (RMSE) for Cumulative Power: {rmse_cum_power}")
     print("Evaluation finished!")
+
+    if grid_search_results is not None:
+        log_score(grid_search_results['score'], rmse_targets, rmse_power, rmse_cum_power, grid_search_results['params'])
 
     return model

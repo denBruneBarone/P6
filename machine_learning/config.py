@@ -1,14 +1,16 @@
 class HPConfig:
-    criterion = 'friedman_mse'  # samme som paper
-    max_depth = 10  # værdien fra paperet om modeller er 7
-    max_features = None  # samme som paper
-    max_leaf_nodes = 500  # værdien fra paperet om modeller er 10
+    criterion = 'friedman_mse'
+    max_depth = 6 # paper siger 7
+    max_features = None
+    max_leaf_nodes = 10
+
 
 class BestHPConfig:
-    criterion = None
-    max_depth = None
+    criterion = 'friedman_mse'
+    max_depth = 6
     max_features = None
-    max_leaf_nodes = None
+    max_leaf_nodes = 10
+
 
 class GridSearchConfig:
     param_grid = {

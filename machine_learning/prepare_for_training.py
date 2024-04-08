@@ -57,7 +57,7 @@ class TrainingDataset:
 def format_data(input_data):
     if isinstance(input_data, list):
         formatted_array = []
-        for df in input:
+        for df in input_data:
             df['position_x'] = df['position_x'] - df['position_x'].iloc[0]
             df['position_y'] = df['position_y'] - df['position_y'].iloc[0]
             df['position_z'] = df['position_z'] - df['position_z'].iloc[0]
