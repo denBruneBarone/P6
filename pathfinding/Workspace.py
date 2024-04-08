@@ -7,6 +7,14 @@ class Workspace:
         self.max_bounds = max_bounds
         self.flight_paths = []
         self.blockages = []
+        self.wind_field = []
+
+    def add_wind_field(self, angle, wind_speed):
+        # Use this for wind speed
+        # call from main.py, just like blockage
+        #self.wind_field.append()
+        raise NotImplementedError
+
 
     def add_blockage(self, blockage_matrix, position):
         if len(blockage_matrix.shape) != self.dimensions:
@@ -41,7 +49,6 @@ class Workspace:
             for blockage_matrix, position in self.blockages:
                 x, y, z = position
                 ax.bar3d(x, y, z, *blockage_matrix.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5)
-
 
             # Plot flight paths
             for flight_path in self.flight_paths:
@@ -118,6 +125,7 @@ class Workspace:
 
     def check_segment_intersects_blockage(self, xs, ys, zs, blockage):
         if zs is not None:
+            # If 3-Dimensional
             for i in range(len(xs) - 1):
                 if (
                         (blockage[1][0] <= xs[i] < blockage[1][0] + blockage[0].shape[0] and
@@ -132,6 +140,7 @@ class Workspace:
                     return True
             return False
         else:
+            # If 2-Dimensional
             for i in range(len(xs) - 1):
                 # Accessing the first zero'th element of the 1st list. That is (30,30,0) -> 30 (The blockages position)
                 if (
@@ -147,3 +156,14 @@ class Workspace:
             return
         # True: intersection between segment and blockage
         # False: No intersection between segment and blockage
+
+    def find_optimal_path(self, mission):
+        print('hello world')
+        # Maybe here call plot_space to show the workspace
+
+        flight_path = [(0, 0, 0), (5, 5, 0), (10, 10, 0), (15, 15, 0), (20, 20, 0), (25, 25, 0), (30, 30, 0),
+                       (35, 35, 0),
+                       (40, 40, 0), (45, 45, 0), (50, 50, 0), (55, 55, 0), (60, 60, 0), (65, 65, 0), (70, 70, 0),
+                       (75, 75, 0), (80, 80, 0)]
+
+        return flight_path

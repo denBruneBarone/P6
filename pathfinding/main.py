@@ -1,3 +1,4 @@
+from pathfinding.Mission import Mission
 from pathfinding.Workspace import Workspace
 import numpy as np
 
@@ -59,18 +60,17 @@ def setup_workspace():
     position_2 = [60, 60, 0]  # Specify the position of the blockage
     space.add_blockage(blockage_matrix_2, position_2)
 
+    # Add Windfield
+    #Call add_wind_field
     return space
 
 
-def predict_path():
+def find_and_show_optimal_path():
     workspace = setup_workspace()
+    mission = Mission((0, 0, 0), (50, 50, 0), 500)
 
-    # Plot the space
+    flight_path = workspace.find_optimal_path(mission)
     # flight_path = generate_random_path(workspace)
-    flight_path = [(0, 0, 0), (5, 5, 0), (10, 10, 0), (15, 15, 0), (20, 20, 0), (25, 25, 0), (30, 30, 0), (35, 35, 0),
-                   (40, 40, 0), (45, 45, 0), (50, 50, 0), (55, 55, 0), (60, 60, 0), (65, 65, 0), (70, 70, 0),
-                   (75, 75, 0), (80, 80, 0)]
-
     workspace.add_flight_path(flight_path=flight_path)
 
     # Options: 2D or 3D
@@ -79,4 +79,4 @@ def predict_path():
 
 
 if __name__ == '__main__':
-    predict_path()
+    find_and_show_optimal_path()
