@@ -62,8 +62,9 @@ def format_data(input_data):
             df['position_y'] = df['position_y'] - df['position_y'].iloc[0]
             df['position_z'] = df['position_z'] - df['position_z'].iloc[0]
 
+            df['battery_current'] = df['battery_current'].apply(lambda x: max(x, 0))
+
             df = df.drop(columns=['flight', 'speed', 'altitude', 'date', 'time_day', 'route'])
-            df = add_power_to_df(df)
             formatted_array.append(df)
         return formatted_array
     elif isinstance(input_data, pd.DataFrame):
@@ -72,6 +73,7 @@ def format_data(input_data):
         df['position_y'] = df['position_y'] - df['position_y'].iloc[0]
         df['position_z'] = df['position_z'] - df['position_z'].iloc[0]
 
+        df['battery_current'] = df['battery_current'].apply(lambda x: max(x, 0))
+
         df = df.drop(columns=['flight', 'speed', 'altitude', 'date', 'time_day', 'route'])
-        df = add_power_to_df(df)
         return df

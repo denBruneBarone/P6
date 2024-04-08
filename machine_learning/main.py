@@ -25,13 +25,14 @@ def train():
         print("Loading pre-trained model...")
         with open(MODEL_FILE_PATH, 'rb') as model_file:
             model = pickle.load(model_file)
-        evaluate_model(model, test_data)
+        evaluate_model(model, test_data, save_predictions_in_excel=False)
     else:
         model = train_model(train_data, test_data, use_grid_search=False)
 
         print("Saving trained model...")
         with open(MODEL_FILE_PATH, 'wb') as model_file:
             pickle.dump(model, model_file)
+        print("Model saved in " + MODEL_FILE_PATH)
 
 
 if __name__ == "__main__":

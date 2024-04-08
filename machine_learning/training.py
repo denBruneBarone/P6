@@ -2,36 +2,53 @@ import numpy as np
 from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.tree import DecisionTreeRegressor
 from machine_learning.prepare_for_training import TrainingDataset
-from sklearn.metrics import mean_squared_error
+from machine_learning.logs.predictions_to_excel import predictions_to_excel
 from machine_learning.config import HPConfig, GridSearchConfig
-from sklearn.metrics import make_scorer
-from machine_learning.grid_search_logs.log import log_score
+from sklearn.metrics import make_scorer, mean_squared_error, mean_absolute_error
+from machine_learning.logs.hp_to_csv import hp_to_csv
 
 
 def rmse(true, predicted):  # order of params important!
     return np.sqrt(mean_squared_error(true, predicted))
 
 
+def mae(true, predicted):
+    return mean_absolute_error(true, predicted)
+
+
+def mape(true, predicted):
+    absolute_percentage_errors = np.abs((true - predicted) / true) * 100
+    return np.mean(absolute_percentage_errors)
+
+
+def percentage_accuracy(true, predicted):
+    mae_score = mae(true, predicted)
+    target_range = np.max(true) - np.min(true)
+    normalized_mae = mae_score / target_range
+    percentage_accuracy_score = (1 - normalized_mae) * 100
+    return percentage_accuracy_score
+
 def power(true_labels, predicted_labels):
-    true_power = predicted_labels[:, 0] * predicted_labels[:, 1]
-    predicted_power = true_labels[:, 0] * true_labels[:, 1]
+    true_power = true_labels[:, 0] * true_labels[:, 1]
+    predicted_power = predicted_labels[:, 0] * predicted_labels[:, 1]
 
     return true_power, predicted_power
 
 
-def cum_power(true_power, predicted_power, time_diff):
-    true_cum_power = np.cumsum(true_power * time_diff)
-    predicted_cum_power = np.cumsum(predicted_power * time_diff)
-    return true_cum_power, predicted_cum_power
+def custom_scoring_rmse(y_true, y_pred):
+    rmse_current = rmse(y_true[:, 0], y_pred[:, 0])
+    rmse_voltage = rmse(y_true[:, 1], y_pred[:, 1])
+    return (rmse_current + rmse_voltage) / 2
 
 
-def custom_scoring(true_labels, predicted_labels):
-    true_power, predicted_power = power(true_labels, predicted_labels)
-    return rmse(true_power, predicted_power)
+def custom_scoring_mae(y_true, y_pred):
+    mae_current = mean_absolute_error(y_true[:, 0], y_pred[:, 0])
+    mae_voltage = mean_absolute_error(y_true[:, 1], y_pred[:, 1])
+    return (mae_current + mae_voltage) / 2
 
 
 # greater_is_better=False sign-swaps the result!
-custom_scoring = make_scorer(custom_scoring, greater_is_better=False)
+custom_scoring = make_scorer(custom_scoring_mae, greater_is_better=False)
 
 
 def extract_features_and_targets(dataset):
@@ -94,7 +111,7 @@ def train_model(train_data, test_data, use_grid_search):
     return evaluate_model(model, test_data, grid_search_results)
 
 
-def evaluate_model(model, test_data, grid_search_results=None):
+def evaluate_model(model, test_data, grid_search_results=None, save_predictions_in_excel=True):
     print("Evaluating...")
     test_dataset = TrainingDataset(test_data)
 
@@ -104,20 +121,26 @@ def evaluate_model(model, test_data, grid_search_results=None):
     model.fit(test_features_np, test_targets_np)
 
     test_predictions = model.predict(test_features_np)
+
     rmse_targets = rmse(test_targets_np, test_predictions)
+    mae_targets = mae(test_targets_np, test_predictions)
+    pa_targets = percentage_accuracy(test_targets_np, test_predictions)
     print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {rmse_targets}")
+    print(f"Test Mean Absolute Error (MAE) for Voltage and Current: {mae_targets}")
+    print(f"Test Percentage Accuracy (PA) for Voltage and Current: {pa_targets}")
 
     true_power, predicted_power = power(test_targets_np, test_predictions)
     rmse_power = rmse(true_power, predicted_power)
-    print(f"Test Root Mean Squared Error (RMSE) for Power: {rmse_power}")
+    mae_power = mean_absolute_error(true_power, predicted_power)
+    pa_power = percentage_accuracy(true_power, predicted_power)
+    print("Test Root Mean Squared Error (RMSE) for Power:", rmse_power)
+    print("Test Mean Absolute Error (MAE) for Power :", mae_power)
+    print("Test Percentage Accuracy (PA) for Power:", pa_power)
 
-    time_diff = np.diff(test_features_np[:, 0], prepend=0)
-    true_cum_power, predicted_cum_power = cum_power(true_power, predicted_power, time_diff)
-    rmse_cum_power = rmse(true_cum_power, predicted_cum_power)
-    print(f"Test Mean Squared Error (RMSE) for Cumulative Power: {rmse_cum_power}")
-    print("Evaluation finished!")
+    if save_predictions_in_excel:
+        predictions_to_excel(test_targets_np, test_predictions, true_power, predicted_power)
 
     if grid_search_results is not None:
-        log_score(grid_search_results['score'], rmse_targets, rmse_power, rmse_cum_power, grid_search_results['params'])
+        hp_to_csv(grid_search_results['score'], rmse_targets, mae_targets, pa_targets, rmse_power, mae_power, pa_power, grid_search_results['params'])
 
     return model
