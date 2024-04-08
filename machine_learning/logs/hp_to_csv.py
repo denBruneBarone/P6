@@ -4,10 +4,10 @@ import getpass
 import os
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-file = os.path.join(PROJECT_ROOT, "machine_learning/grid_search_logs/hp_log.csv")
+file = os.path.join(PROJECT_ROOT, "machine_learning/logs/hp_log.csv")
 
 
-def log_score(score, rmse_targets, rmse_power, rmse_cum_power, params):
+def hp_to_csv(score, rmse_targets, mae_targets, pa_targets, rmse_power, mae_power, pa_power, params):
     # Get the username of the current user
     username = getpass.getuser()
 
@@ -22,7 +22,7 @@ def log_score(score, rmse_targets, rmse_power, rmse_cum_power, params):
 
     # Add the new entry
     param_values = [value if value is not None else "None" for value in params.values()]
-    new_entry = [score] + [rmse_targets] + [rmse_power] + [rmse_cum_power] + param_values + [username] + [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+    new_entry = [score] + [rmse_targets] + [mae_targets] + [pa_targets] + [rmse_power] + [mae_power] + [pa_power] + param_values + [username] + [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
     existing_entries.append(new_entry)
 
     # Sort the entries by score
@@ -31,5 +31,6 @@ def log_score(score, rmse_targets, rmse_power, rmse_cum_power, params):
     # Write the sorted entries back to the CSV file
     with open(file, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['score', 'rmse_targets', 'rmse_power', 'rmse_cum_power', 'criterion', 'max_depth', 'max_features', 'max_leaf_nodes', 'username', 'date'])
+        writer.writerow(['score', 'rmse_targets', 'mae_targets', 'pa_targets', 'rmse_power', 'mae_power', 'pa_power', 'criterion', 'max_depth', 'max_features', 'max_leaf_nodes', 'username', 'date'])
         writer.writerows(sorted_entries)
+
