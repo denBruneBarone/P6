@@ -17,9 +17,7 @@ class TrainingDataset:
         features = df[
             ['time', 'wind_speed', 'wind_angle',
              'position_x', 'position_y', 'position_z',
-             'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w',
              'velocity_x', 'velocity_y', 'velocity_z',
-             'angular_x', 'angular_y', 'angular_z',
              'linear_acceleration_x', 'linear_acceleration_y', 'linear_acceleration_z',
              'payload']
         ].values
@@ -36,9 +34,7 @@ class TrainingDataset:
         input_array = sample[
             ['time', 'wind_speed', 'wind_angle',
              'position_x', 'position_y', 'position_z',
-             'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w',
              'velocity_x', 'velocity_y', 'velocity_z',
-             'angular_x', 'angular_y', 'angular_z',
              'linear_acceleration_x', 'linear_acceleration_y', 'linear_acceleration_z',
              'payload']
         ].values
