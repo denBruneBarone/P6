@@ -1,39 +1,50 @@
+import numpy as np
 
-def check_intersect_3d(x1, y1, z1, x2, y2, z2, blockage_x, blockage_y, blockage_z, blockage_width, blockage_height, blockage_depth):
-    """
-    Check if a line segment intersects with a 3D blockage.
-    """
-    # Check if any endpoint of the line segment is inside the blockage
-    if (blockage_x <= x1 < blockage_x + blockage_width and
-        blockage_y <= y1 < blockage_y + blockage_height and
-        blockage_z <= z1 < blockage_z + blockage_depth) or \
-       (blockage_x <= x2 < blockage_x + blockage_width and
-        blockage_y <= y2 < blockage_y + blockage_height and
-        blockage_z <= z2 < blockage_z + blockage_depth):
-        return True
 
-    # Check if the line segment intersects with any face of the blockage
-    # By checking if any endpoint of the line segment is on opposite sides of any of the blockage's faces
-    return (x1 < blockage_x and x2 > blockage_x + blockage_width) or \
-           (y1 < blockage_y and y2 > blockage_y + blockage_height) or \
-           (z1 < blockage_z and z2 > blockage_z + blockage_depth)
+def ray_intersects_blockage(start, end, block_position, block_size):
+    """
+    Check if a ray defined by a line segment intersects with a blockage in 3D space.
+    """
+
+    # Calculate direction vector of the ray
+    direction = end - start
+
+    # Check for intersection with each face of the blockage
+    for i in range(3):  # Iterate over each axis (x, y, z)
+        if direction[i] != 0:  # Ensure non-zero direction component along the axis
+            # Calculate parameters where the ray intersects the faces of the blockage along the axis
+            t1 = (block_position[i] - start[i]) / direction[i]
+            t2 = ((block_position[i] + block_size[i]) - start[i]) / direction[i]
+            tmin = min(t1, t2)
+            tmax = max(t1, t2)
+
+            # Intersection along this axis
+            if tmax < 0 or tmin > 1:
+                return False  # No intersection on this axis
+        else:
+            # Ray is parallel to the plane, check if it's inside the blockage on this axis
+            if start[i] < block_position[i] or start[i] > block_position[i] + block_size[i]:
+                return False  # No intersection
+
+    return True  # Intersection detected
 
 
 def check_segment_intersects_blockage(xs, ys, zs, blockage):
     """
-    Check if a line segment intersects with a blockage in 2D or 3D.
+    Check if a line segment intersects with a blockage in 3D space.
     """
+
     # Extract blockage properties
     block_position = blockage[1]
     block_size_x, block_size_y, block_size_z = blockage[0].shape
 
     for i in range(len(xs) - 1):
         # Accessing coordinates of the line segment
-        x1, y1, z1 = xs[i], ys[i], zs[i]
-        x2, y2, z2 = xs[i + 1], ys[i + 1], zs[i + 1]
+        start = np.array([xs[i], ys[i], zs[i]])
+        end = np.array([xs[i + 1], ys[i + 1], zs[i + 1]])
 
-        # Check if the line segment intersects with the blockage
-        intersect = check_intersect_3d(x1, y1, z1, x2, y2, z2, *block_position, block_size_x, block_size_y, block_size_z)
+        # Check if the segment intersects with the blockage using ray tracing
+        intersect = ray_intersects_blockage(start, end, block_position, (block_size_x, block_size_y, block_size_z))
         if intersect:
             print('Collision with Block found')
             return True

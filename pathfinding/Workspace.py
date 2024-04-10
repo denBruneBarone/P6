@@ -82,7 +82,6 @@ class Workspace:
                         ax.plot(x_coords, y_coords, color='g', alpha=0.5)
             return ax
 
-
     def plot_space(self, dimension='3D', dpi=300):
         if dimension == '3D':
             fig = plt.figure(dpi=dpi)
@@ -148,7 +147,8 @@ class Workspace:
 
         # Generate random flight path data
         num_points = 50  # Number of points in the flight path
-        min_coord, max_coord = 0, 400  # Range for coordinates in each dimension
+        min_coord, max_coord = 0, 400  # Range for coordinates in each dimension of x and z
+        min_coord_z, max_coord_z = 0, 60
 
         # Generate random x, y, z coordinates for the flight path while avoiding blockages
         flight_path = []
@@ -156,7 +156,7 @@ class Workspace:
             # Generate random coordinates
             x_coord = np.random.randint(min_coord, max_coord)
             y_coord = np.random.randint(min_coord, max_coord)
-            z_coord = np.random.randint(min_coord, max_coord // 4)  # Adjusted for z-axis (height)
+            z_coord = np.random.randint(min_coord_z, max_coord_z)  # Adjusted for z-axis (height)
             print(f"Generated coordinates: ({x_coord}, {y_coord}, {z_coord})")
 
             # Check if the generated coordinates are within any blockages

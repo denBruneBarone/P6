@@ -31,13 +31,20 @@ def find_and_show_optimal_path():
     # flight_path = workspace.find_optimal_path(mission)
     # flight_path = workspace.generate_random_path()
     # flight_path = workspace.generate_path_fill_blockage()
-    flight_path = workspace.generate_path_completely_fill_blockage()
-
+    # flight_path = workspace.generate_path_completely_fill_blockage()
 
     #
-    # flight_path = [(0, 0, 0), (249, 250, 30), (301, 300, 30), (320, 320, 30), (230, 320, 30), (250, 300, 30), (275, 275, 30),
-    #                (300, 250, 30), (320, 230, 30), (230, 230, 30), (230, 275, 30), (310, 275, 30), (310, 310, 30),
-    #                (275, 310, 30), (275, 275, 30), (275, 230, 30)]
+    flight_path = [(0, 0, 0),
+                   (250, 250, 30),  # 1
+                   (300, 300, 30),  # 2
+                   (320, 320, 30), (230, 320, 30),
+                   (250, 300, 30),  # 3
+                   (275, 275, 30),
+                   (300, 250, 30),  # 4
+                   (320, 230, 30), (230, 230, 30), (230, 275, 30), (310, 275, 30), (310, 310, 30),
+                   (275, 310, 30), (275, 275, 30), (275, 230, 30), (275, 120, 30), (120, 120, 30), (120, 200, 30),
+                   (160, 200, 30), (160, 120, 30), (160, 119, 30), (119, 119, 30), (119, 201, 30),
+                   (161, 201, 30), (161, 119, 30)]
 
     workspace.add_flight_path(flight_path=flight_path)
 
