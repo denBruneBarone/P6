@@ -1,7 +1,8 @@
+import joblib
 import matplotlib.pyplot as plt
 import heapq
+import math
 from pathfinding.Node import Node
-
 
 class Workspace:
     def __init__(self, dimensions, max_bounds):
@@ -189,6 +190,38 @@ class Workspace:
 
         def heuristic(node):
             return distance(node, end_node)
+
+        def calculate_time(d, velocity_min, velocity_max):
+            velocity_next = 15
+            velocity_current = 6
+            acc_hori = 5 # Horizontal acceleration=5 m/s^2
+            acc_verti = 1 # vertical acceleration=1 m/s^2
+
+            if velocity_next == 0 and velocity_current == 0:
+                return math.inf
+
+            # Ensure velocity is within the range
+            velocity_next = min(max(velocity_next, velocity_min), velocity_max)
+            velocity_current = min(max(velocity_current, velocity_min), velocity_max)
+
+            # Calculate time to accelerate from current velocity to next velocity
+            delta_velocity = velocity_next - velocity_current
+            time_acceleration = abs(delta_velocity) / max(acc_hori, acc_verti)
+
+            # Calculate distance traveled during acceleration
+            distance_acceleration = 0.5 * (velocity_current + velocity_next) * time_acceleration
+
+            # Calculate remaining distance
+            remaining_distance = d - distance_acceleration
+
+            if remaining_distance <= 0:
+                return time_acceleration
+
+            # Calculate time to travel remaining distance at next velocity
+            time_travel = remaining_distance / velocity_next
+
+            # Total time is sum of time to accelerate and time to travel remaining distance
+            return time_acceleration + time_travel
 
         pq = [(heuristic(start_node), start_node)]
 
