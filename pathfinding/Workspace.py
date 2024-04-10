@@ -52,9 +52,9 @@ class Workspace:
 
                     # Plot the segment in the appropriate color
                     if segment_intersects:
-                        ax.plot(x_coords, y_coords, z_coords, color='r', alpha=0.5)
+                        ax.plot(x_coords, y_coords, z_coords, color='r', alpha=0.5, zorder=-1)
                     else:
-                        ax.plot(x_coords, y_coords, z_coords, color='g', alpha=0.5)
+                        ax.plot(x_coords, y_coords, z_coords, color='g', alpha=0.5, zorder=1)
             return ax
         elif dimension == '2D':
             # Plot flight paths
@@ -85,7 +85,7 @@ class Workspace:
     def plot_space(self, dimension='3D', dpi=300):
         if dimension == '3D':
             fig = plt.figure(dpi=dpi)
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection='3d', computed_zorder=False)
 
             # Plot origin
             ax.scatter(0, 0, 0, color='k')
@@ -93,7 +93,10 @@ class Workspace:
             # Plot blockages
             for blockage_matrix, position in self.blockages:
                 x, y, z = position
-                ax.bar3d(x, y, z, *blockage_matrix.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5)
+                ax.bar3d(x, y, z, *blockage_matrix.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5,
+                         zorder=0)
+
+            # z-order: the higher the more in front
 
             ax = self.plot_flight_paths(ax, dimension='3D')
 
@@ -114,7 +117,8 @@ class Workspace:
             # Plot blockages
             for blockage_matrix, position in self.blockages:
                 x, y = position[:2]
-                ax.add_patch(plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='k'))
+                ax.add_patch(
+                    plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='k'))
 
             ax = self.plot_flight_paths(ax, dimension='2D')
 
