@@ -177,7 +177,7 @@ class Workspace:
             (h, -h, 0), (h, -h, 3), (h, -h, -3),
 
             (0, 20, 0),  (0, 20, 3),  (0, 20, -3),
-            (0, 0, 0),   (0, 0, 3),   (0, 0, -2),
+            (0, 0, 0),   (0, 0, 3),   (0, 0, -3),
             (0, -20, 0), (0, -20, 3), (0, -20, -3),
 
             (-h, h, 0),  (-h, h, 3),  (-h, h, -3),
@@ -236,16 +236,16 @@ class Workspace:
 
         # TODO: Rune og Lucas: dist_x + dist_y <= 20, dist_z <= 3  --- se paper side 8 afsnit b
         def distance(node1, node2):
-            dist_x = abs(node1.x - node2.x)
-            dist_y = abs(node1.y - node2.y)
-            dist_z = abs(node1.z - node2.z)
-            return dist_x + dist_y + dist_z
+            dist_x = (node1.x - node2.x) ** 2
+            dist_y = (node1.y - node2.y) ** 2
+            dist_z = (node1.z - node2.z) ** 2
+            return math.sqrt(dist_x + dist_y + dist_z)
 
         def heuristic(node):
             dist = distance(node, end_node)
 
             if node.z < 30:
-                dist += 2 * (30 - node.z)
+                dist += 30 - node.z
 
             return dist
 
