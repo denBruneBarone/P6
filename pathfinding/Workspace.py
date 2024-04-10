@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import heapq
+import math
 from pathfinding.Node import Node
 
 
@@ -160,27 +161,45 @@ class Workspace:
         # False: No intersection between segment and blockage
 
     def find_optimal_path(self, mission):
-        print('find optimal path')
+        print('Finding optimal path...')
         # TODO: Caspar: Maybe here call plot_space to show the workspace
-        start_node = Node(*mission.start)
-        end_node = Node(*mission.end)
+        start_node = mission.start
+        end_node = mission.end
         payload = mission.payload
-        blockages = self.blockages
+        blockages = []
         wind_field = self.wind_field
+
+        h = 10 * math.sqrt(2)
+        directions = [
+            (h, h, 0),  (h, h, 3),  (h, h, -3),
+            (20, 0, 0), (20, 0, 3), (20, 0, -3),
+            (h, -h, 0), (h, -h, 3), (h, -h, -3),
+
+            (0, 20, 0),  (0, 20, 3),  (0, 20, -3),
+            (0, 0, 0),   (0, 0, 3),   (0, 0, -2),
+            (0, -20, 0), (0, -20, 3), (0, -20, -3),
+
+            (-h, h, 0),  (-h, h, 3),  (-h, h, -3),
+            (-20, 0, 0), (-20, 0, 3), (-20, 0, -3),
+            (-h, -h, 0), (-h, -h, 3), (-h, -h, -3),
+        ]
 
         def get_neighbors(node):
             neighbors = []
 
-            for dist_x, dist_y, dist_z in [(20, 0, 0), (-20, 0, 0), (0, 20, 0), (0, -20, 0), (0, 0, 3), (0, 0, -3)]:
-                new_x = node.x + dist_x
-                new_y = node.y + dist_y
-                new_z = node.z + dist_z
-                new_node = Node(new_x, new_y, new_z)
-                if new_node not in blockages:
-                    neighbors.append(new_node)
+            if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20 and abs(node.z - end_node.z) <= 3:
+                neighbors.append(end_node)
+
+            else:
+                for dist_x, dist_y, dist_z in directions:
+                    new_x = node.x + dist_x
+                    new_y = node.y + dist_y
+                    new_z = node.z + dist_z
+                    new_node = Node(new_x, new_y, new_z)
+                    if new_node not in blockages:
+                        neighbors.append(new_node)
             return neighbors
 
-        # TODO: Rune og Lucas: dist_x + dist_y <= 20, dist_z <= 3  --- se paper side 8 afsnit b
         def distance(node1, node2):
             dist_x = abs(node1.x - node2.x)
             dist_y = abs(node1.y - node2.y)
@@ -188,9 +207,17 @@ class Workspace:
             return dist_x + dist_y + dist_z
 
         def heuristic(node):
-            return distance(node, end_node)
+            dist = distance(node, end_node)
 
-        pq = [(heuristic(start_node), start_node)]
+            if node.z < 30:
+                dist += 2 * (30 - node.z)
+
+            return dist
+
+        pq = [(0, start_node)]
+
+        visited = {start_node: 0}
+        predecessor = {}
 
         while pq:
             _, current = heapq.heappop(pq)
@@ -199,15 +226,26 @@ class Workspace:
                 break
 
             for neighbor in get_neighbors(current):
-                # Calculate new distance to neighbor
-                new_dist = distance(start_node, current) + distance(current, neighbor)
-                # Calculate new heuristic value for neighbor
-                neighbor_heuristic = new_dist + heuristic(neighbor)
-                # Push neighbor to priority queue with its heuristic value
-                heapq.heappush(pq, (neighbor_heuristic, neighbor))
+                new_dist = visited[current] + 1
 
-        path_example = [(0, 0, 0), (5, 5, 0), (10, 10, 0), (15, 15, 0), (20, 20, 0), (25, 25, 0), (30, 30, 0),
-                       (35, 35, 0),
-                       (40, 40, 0), (45, 45, 0), (50, 50, 0), (400,400, 0)]
-        path = path_example
-        return path
+                if neighbor not in visited or new_dist < visited[neighbor]:
+                    visited[neighbor] = new_dist
+                    predecessor[neighbor] = current
+                    neighbor_heuristic = new_dist + heuristic(neighbor)
+                    heapq.heappush(pq, (neighbor_heuristic, neighbor))
+
+        path = []
+        current = end_node
+        while current != start_node:
+            path.append(current)
+            current = predecessor[current]
+        path.append(start_node)
+        path.reverse()
+
+        # Convert path nodes to coordinates
+        path_coordinates = [(node.x, node.y, node.z) for node in path]
+
+        print(path_coordinates)
+
+        return path_coordinates
+

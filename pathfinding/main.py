@@ -1,5 +1,6 @@
 from pathfinding.Mission import Mission
 from pathfinding.Workspace import Workspace
+from pathfinding.Node import Node
 import numpy as np
 
 
@@ -51,14 +52,14 @@ def setup_workspace():
     space = Workspace(dimensions, max_bounds)
 
     # Add a blockage (building) represented as a matrix
-    blockage_matrix_1 = np.ones((10, 20, 50))  # Define a 2x2x3 blockage matrix
-    position_1 = [30, 30, 0]  # Specify the position of the blockage
-    space.add_blockage(blockage_matrix_1, position_1)
-
-    # Add a blockage (building) represented as a matrix
-    blockage_matrix_2 = np.ones((10, 10, 50))  # Define a 2x2x3 blockage matrix
-    position_2 = [60, 60, 0]  # Specify the position of the blockage
-    space.add_blockage(blockage_matrix_2, position_2)
+    # blockage_matrix_1 = np.ones((10, 20, 50))  # Define a 2x2x3 blockage matrix
+    # position_1 = [30, 30, 0]  # Specify the position of the blockage
+    # space.add_blockage(blockage_matrix_1, position_1)
+    #
+    # # Add a blockage (building) represented as a matrix
+    # blockage_matrix_2 = np.ones((10, 10, 50))  # Define a 2x2x3 blockage matrix
+    # position_2 = [60, 60, 0]  # Specify the position of the blockage
+    # space.add_blockage(blockage_matrix_2, position_2)
 
     # Add Windfield
     #Call add_wind_field
@@ -67,7 +68,7 @@ def setup_workspace():
 
 def find_and_show_optimal_path():
     workspace = setup_workspace()
-    mission = Mission((0, 0, 0), (400, 400, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(200, 350, 0), 500)
 
     flight_path = workspace.find_optimal_path(mission)
     # flight_path = generate_random_path(workspace)
