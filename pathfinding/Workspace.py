@@ -216,7 +216,7 @@ class Workspace:
             # Total time is sum of time to accelerate and time to travel remaining distance
             return time_acceleration + time_travel
 
-        pq = [(heuristic(start_node), start_node)]
+        pq = [0, start_node]
 
         def get_neighbors(node):
             neighbors = []
