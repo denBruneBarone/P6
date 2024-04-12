@@ -1,8 +1,27 @@
-import joblib
+import os
+import pickle
 import matplotlib.pyplot as plt
 import heapq
 import math
 from pathfinding.Node import Node
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+# Define the path for saving/loading the model
+MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/trained_model.pkl")
+
+
+def load_model(file_path):
+    with open(file_path, 'rb') as f:
+        model = pickle.load(f)
+    return model
+
+
+# Load the model
+ml_model = load_model(MODEL_FILE_PATH)
+
+
+def power(target_labels):
+    return target_labels[:, 0] * target_labels[:, 1]
 
 
 class Workspace:
@@ -16,9 +35,8 @@ class Workspace:
     def add_wind_field(self, angle, wind_speed):
         # Use this for wind speed
         # call from main.py, just like blockage
-        #self.wind_field.append()
+        # self.wind_field.append()
         raise NotImplementedError
-
 
     def add_blockage(self, blockage_matrix, position):
         if len(blockage_matrix.shape) != self.dimensions:
@@ -172,23 +190,24 @@ class Workspace:
 
         h = 10 * math.sqrt(2)
         directions = [
-            (h, h, 0),  (h, h, 3),  (h, h, -3),
+            (h, h, 0), (h, h, 3), (h, h, -3),
             (20, 0, 0), (20, 0, 3), (20, 0, -3),
             (h, -h, 0), (h, -h, 3), (h, -h, -3),
 
-            (0, 20, 0),  (0, 20, 3),  (0, 20, -3),
-            (0, 0, 0),   (0, 0, 3),   (0, 0, -3),
+            (0, 20, 0), (0, 20, 3), (0, 20, -3),
+            (0, 0, 0), (0, 0, 3), (0, 0, -3),
             (0, -20, 0), (0, -20, 3), (0, -20, -3),
 
-            (-h, h, 0),  (-h, h, 3),  (-h, h, -3),
+            (-h, h, 0), (-h, h, 3), (-h, h, -3),
             (-20, 0, 0), (-20, 0, 3), (-20, 0, -3),
             (-h, -h, 0), (-h, -h, 3), (-h, -h, -3),
         ]
+
         def calculate_time(d, velocity_min, velocity_max):
             velocity_next = 15
             velocity_current = 6
-            acc_hori = 5 # Horizontal acceleration=5 m/s^2
-            acc_verti = 1 # vertical acceleration=1 m/s^2
+            acc_hori = 5  # Horizontal acceleration=5 m/s^2
+            acc_verti = 1  # vertical acceleration=1 m/s^2
 
             if velocity_next == 0 and velocity_current == 0:
                 return math.inf
@@ -221,7 +240,9 @@ class Workspace:
         def get_neighbors(node):
             neighbors = []
 
-            if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20 and abs(node.z - end_node.z) <= 3:
+            # if next to goal
+            if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20 and abs(
+                    node.z - end_node.z) <= 3:
                 neighbors.append(end_node)
 
             else:
@@ -241,7 +262,31 @@ class Workspace:
             dist_z = (node1.z - node2.z) ** 2
             return math.sqrt(dist_x + dist_y + dist_z)
 
-        def heuristic(node):
+        def heuristic_power(current_node, next_node):
+            time = calculate_time(distance(current_node, next_node), 6, 15)
+            wind_speed = 0
+            wind_angle = 0
+            payload = 200
+            linear_acceleration_x, linear_acceleration_y, linear_acceleration_z = 5, 0, 1
+            velocity_x = (next_node.x - current_node.x) / time
+            velocity_y = (next_node.y - current_node.y) / time
+            velocity_z = (next_node.y - current_node.y) / time
+
+            input_array = [[time, wind_speed, wind_angle,
+                            next_node.x, next_node.y, next_node.z,
+                            velocity_x, velocity_y, velocity_z,
+                            linear_acceleration_x, linear_acceleration_y, linear_acceleration_z,
+                            payload]]
+
+            target_labels = ml_model.predict(input_array)
+
+            power_joule = power(target_labels)
+
+            # print("Heuristic power:", *power_joule)
+
+            return power_joule
+
+        def heuristic_distance(node):
             dist = distance(node, end_node)
 
             if node.z < 30:
@@ -261,13 +306,13 @@ class Workspace:
                 break
 
             for neighbor in get_neighbors(current):
-                new_dist = visited[current] + 1
+                # Calculate the energy for the neighbor using the heuristic function
+                neighbor_energy = visited[current] + heuristic_power(current, neighbor)
 
-                if neighbor not in visited or new_dist < visited[neighbor]:
-                    visited[neighbor] = new_dist
+                if neighbor not in visited or neighbor_energy < visited[neighbor]:
+                    visited[neighbor] = neighbor_energy
                     predecessor[neighbor] = current
-                    neighbor_heuristic = new_dist + heuristic(neighbor)
-                    heapq.heappush(pq, (neighbor_heuristic, neighbor))
+                    heapq.heappush(pq, (neighbor_energy, neighbor))
 
         path = []
         current = end_node
