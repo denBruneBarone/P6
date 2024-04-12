@@ -29,24 +29,24 @@ def ray_intersects_blockage(start, end, block_position, block_size):
     return True  # Intersection detected
 
 
-def check_segment_intersects_blockage(xs, ys, zs, blockage):
+def check_segment_intersects_blockages(xs, ys, zs, blockages):
     """
-    Check if a line segment intersects with a blockage in 3D space.
+    Check if a line segment intersects with any blockage in 3D space.
     """
 
-    # Extract blockage properties
-    block_position = blockage[1]
-    block_size_x, block_size_y, block_size_z = blockage[0].shape
+    for blockage in blockages:
+        # Extract blockage properties
+        block_position = blockage[1]
+        block_size_x, block_size_y, block_size_z = blockage[0].shape
 
-    for i in range(len(xs) - 1):
-        # Accessing coordinates of the line segment
-        start = np.array([xs[i], ys[i], zs[i]])
-        end = np.array([xs[i + 1], ys[i + 1], zs[i + 1]])
+        for i in range(len(xs) - 1):
+            # Accessing coordinates of the line segment
+            start = np.array([xs[i], ys[i], zs[i]])
+            end = np.array([xs[i + 1], ys[i + 1], zs[i + 1]])
 
-        # Check if the segment intersects with the blockage using ray tracing
-        intersect = ray_intersects_blockage(start, end, block_position, (block_size_x, block_size_y, block_size_z))
-        if intersect:
-            print('Collision with Block found')
-            return True
+            # Check if the segment intersects with the blockage using ray tracing
+            intersect = ray_intersects_blockage(start, end, block_position, (block_size_x, block_size_y, block_size_z))
+            if intersect:
+                return True
 
     return False

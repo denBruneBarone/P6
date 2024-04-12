@@ -44,11 +44,9 @@ class Workspace:
                     y_coords = [ys[i], ys[i + 1]]
                     z_coords = [zs[i], zs[i + 1]]
 
-                    # Check if the current segment intersects with any blockage
-                    segment_intersects = any(
-                        collision_detection.check_segment_intersects_blockage(x_coords, y_coords, z_coords, blockage)
-                        for blockage in self.blockages
-                    )
+                    # # Check if the current segment intersects with any blockage
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords, z_coords,
+                                                                               self.blockages)
 
                     # Plot the segment in the appropriate color
                     if segment_intersects:
@@ -69,11 +67,8 @@ class Workspace:
                     z_coords = [zs[i], zs[i + 1]]
 
                     # Check if the current segment intersects with any blockage
-                    segment_intersects = any(
-                        collision_detection.check_segment_intersects_blockage(x_coords, y_coords, z_coords,
-                                                                              blockage)
-                        for blockage in self.blockages
-                    )
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords, z_coords,
+                                                                               self.blockages)
 
                     # Plot the segment in the appropriate color
                     if segment_intersects:
