@@ -1,8 +1,11 @@
 class Node:
-    def __init__(self, x, y, z):
+    def __init__(self, x, y, z, velocity=None):
         self.x = x
         self.y = y
         self.z = z
+        self.velocity = velocity
+        if velocity is not None:
+            self.velocity = 0
 
     def __eq__(self, other):
         return (self.x, self.y, self.z) == (other.x, other.y, other.z)
@@ -14,4 +17,4 @@ class Node:
         return (self.x, self.y, self.z) > (other.x, other.y, other.z)
 
     def __hash__(self):
-        return hash((self.x, self.y, self.z))
+        return hash((self.x, self.y, self.z, self.velocity))
