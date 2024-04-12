@@ -203,25 +203,21 @@ class Workspace:
             (-h, -h, 0), (-h, -h, 3), (-h, -h, -3),
         ]
 
-        def calculate_time(d, velocity_min, velocity_max):
-            velocity_next = 15
-            velocity_current = 6
+        velocities = (5, 10, 15)
+
+        def calculate_time(current_node, next_node):
+            d = distance(current_node, next_node)
+
+            # TODO: calc acc_hori and acc_verti
             acc_hori = 5  # Horizontal acceleration=5 m/s^2
             acc_verti = 1  # vertical acceleration=1 m/s^2
 
-            if velocity_next == 0 and velocity_current == 0:
-                return math.inf
-
-            # Ensure velocity is within the range
-            velocity_next = min(max(velocity_next, velocity_min), velocity_max)
-            velocity_current = min(max(velocity_current, velocity_min), velocity_max)
-
             # Calculate time to accelerate from current velocity to next velocity
-            delta_velocity = velocity_next - velocity_current
+            delta_velocity = next_node.velocity - current_node.velocity
             time_acceleration = abs(delta_velocity) / max(acc_hori, acc_verti)
 
             # Calculate distance traveled during acceleration
-            distance_acceleration = 0.5 * (velocity_current + velocity_next) * time_acceleration
+            distance_acceleration = 0.5 * (current_node.velocity + next_node.velocity) * time_acceleration
 
             # Calculate remaining distance
             remaining_distance = d - distance_acceleration
@@ -230,7 +226,7 @@ class Workspace:
                 return time_acceleration
 
             # Calculate time to travel remaining distance at next velocity
-            time_travel = remaining_distance / velocity_next
+            time_travel = remaining_distance / next_node.velocity
 
             # Total time is sum of time to accelerate and time to travel remaining distance
             return time_acceleration + time_travel
@@ -243,6 +239,7 @@ class Workspace:
             # if next to goal
             if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20 and abs(
                     node.z - end_node.z) <= 3:
+                end_node.velocity = 0
                 neighbors.append(end_node)
 
             else:
@@ -263,10 +260,9 @@ class Workspace:
             return math.sqrt(dist_x + dist_y + dist_z)
 
         def heuristic_power(current_node, next_node):
-            time = calculate_time(distance(current_node, next_node), 6, 15)
+            time = calculate_time(current_node, next_node)
             wind_speed = 0
             wind_angle = 0
-            payload = 200
             linear_acceleration_x, linear_acceleration_y, linear_acceleration_z = 5, 0, 1
             velocity_x = (next_node.x - current_node.x) / time
             velocity_y = (next_node.y - current_node.y) / time
@@ -307,12 +303,13 @@ class Workspace:
 
             for neighbor in get_neighbors(current):
                 # Calculate the energy for the neighbor using the heuristic function
-                neighbor_energy = visited[current] + heuristic_power(current, neighbor)
+                    for velocity in velocities:
+                        neighbor_energy = visited[current] + heuristic_power(current, neighbor, velocity)
 
-                if neighbor not in visited or neighbor_energy < visited[neighbor]:
-                    visited[neighbor] = neighbor_energy
-                    predecessor[neighbor] = current
-                    heapq.heappush(pq, (neighbor_energy, neighbor))
+                        if neighbor not in visited or neighbor_energy < visited[neighbor]:
+                            visited[neighbor] = neighbor_energy
+                            predecessor[neighbor] = current
+                            heapq.heappush(pq, (neighbor_energy, neighbor))
 
         path = []
         current = end_node
