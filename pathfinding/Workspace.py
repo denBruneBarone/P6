@@ -67,11 +67,9 @@ class Workspace:
                     y_coords = [ys[i], ys[i + 1]]
                     z_coords = [zs[i], zs[i + 1]]
 
-                    # Check if the current segment intersects with any blockage
-                    segment_intersects = any(
-                        collision_detection.check_segment_intersects_blockage(x_coords, y_coords, z_coords, blockage)
-                        for blockage in self.blockages
-                    )
+                    # # Check if the current segment intersects with any blockage
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords, z_coords,
+                                                                               self.blockages)
 
                     # Plot the segment in the appropriate color
                     if segment_intersects:
@@ -92,11 +90,8 @@ class Workspace:
                     z_coords = [zs[i], zs[i + 1]]
 
                     # Check if the current segment intersects with any blockage
-                    segment_intersects = any(
-                        collision_detection.check_segment_intersects_blockage(x_coords, y_coords, z_coords,
-                                                                              blockage)
-                        for blockage in self.blockages
-                    )
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords, z_coords,
+                                                                               self.blockages)
 
                     # Plot the segment in the appropriate color
                     if segment_intersects:
@@ -104,7 +99,6 @@ class Workspace:
                     else:
                         ax.plot(x_coords, y_coords, color='g', alpha=0.5)
             return ax
-
 
     def plot_space(self, dimension='3D', dpi=300):
         if dimension == '3D':
@@ -348,7 +342,8 @@ class Workspace:
 
         # Generate random flight path data
         num_points = 50  # Number of points in the flight path
-        min_coord, max_coord = 0, 400  # Range for coordinates in each dimension
+        min_coord, max_coord = 0, 400  # Range for coordinates in each dimension of x and z
+        min_coord_z, max_coord_z = 0, 60
 
         # Generate random x, y, z coordinates for the flight path while avoiding blockages
         flight_path = []
@@ -356,7 +351,7 @@ class Workspace:
             # Generate random coordinates
             x_coord = np.random.randint(min_coord, max_coord)
             y_coord = np.random.randint(min_coord, max_coord)
-            z_coord = np.random.randint(min_coord, max_coord // 4)  # Adjusted for z-axis (height)
+            z_coord = np.random.randint(min_coord_z, max_coord_z)  # Adjusted for z-axis (height)
             print(f"Generated coordinates: ({x_coord}, {y_coord}, {z_coord})")
 
             # Check if the generated coordinates are within any blockages
