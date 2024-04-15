@@ -208,23 +208,21 @@ class Workspace:
         def calculate_time(current_node, next_node):
             d = distance(current_node, next_node)
 
-            acc_hori = 5  # Horizontal acceleration = 5 m/s^2
-            acc_verti = 1  # Vertical acceleration = 1 m/s^2
+            acc_hori = 5  # Horizontal acceleration=5 m/s^2
+            acc_verti = 1  # vertical acceleration=1 m/s^2
 
             # Calculate time to accelerate from current velocity to next velocity
             delta_velocity = next_node.velocity - current_node.velocity
-
-            # Calculate time to accelerate in horizontal direction
-            time_acceleration_hori = abs(delta_velocity.x) / acc_hori if acc_hori != 0 else float('inf')
-
-            # Calculate time to accelerate in vertical direction
-            time_acceleration_verti = abs(delta_velocity.y) / acc_verti if acc_verti != 0 else float('inf')
-
-            # Choose the smaller time for acceleration
-            time_acceleration = min(time_acceleration_hori, time_acceleration_verti)
+            time_acceleration = abs(delta_velocity) / max(acc_hori, acc_verti)
 
             # Calculate distance traveled during acceleration
             distance_acceleration = 0.5 * (current_node.velocity + next_node.velocity) * time_acceleration
+
+            if next_node.velocity == 0 and next_node == end_node:
+                return time_acceleration
+
+            if next_node.velocity == 0:
+                return 1e9
 
             # Calculate remaining distance
             remaining_distance = d - distance_acceleration
@@ -313,7 +311,7 @@ class Workspace:
             for neighbor in get_neighbors(current):
                 # Calculate the energy for the neighbor using the heuristic function
                     for velocity in velocities:
-                        neighbor_energy = visited[current] + heuristic_power(current, neighbor, velocity)
+                        neighbor_energy = visited[current] + heuristic_power(current, neighbor)
 
                         if neighbor not in visited or neighbor_energy < visited[neighbor]:
                             visited[neighbor] = neighbor_energy

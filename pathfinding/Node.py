@@ -4,7 +4,7 @@ class Node:
         self.y = y
         self.z = z
         self.velocity = velocity
-        if velocity is not None:
+        if velocity is None:
             self.velocity = 0
 
     def __eq__(self, other):
