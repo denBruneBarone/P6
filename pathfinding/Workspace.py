@@ -208,13 +208,20 @@ class Workspace:
         def calculate_time(current_node, next_node):
             d = distance(current_node, next_node)
 
-            # TODO: calc acc_hori and acc_verti
-            acc_hori = 5  # Horizontal acceleration=5 m/s^2
-            acc_verti = 1  # vertical acceleration=1 m/s^2
+            acc_hori = 5  # Horizontal acceleration = 5 m/s^2
+            acc_verti = 1  # Vertical acceleration = 1 m/s^2
 
             # Calculate time to accelerate from current velocity to next velocity
             delta_velocity = next_node.velocity - current_node.velocity
-            time_acceleration = abs(delta_velocity) / max(acc_hori, acc_verti)
+
+            # Calculate time to accelerate in horizontal direction
+            time_acceleration_hori = abs(delta_velocity.x) / acc_hori if acc_hori != 0 else float('inf')
+
+            # Calculate time to accelerate in vertical direction
+            time_acceleration_verti = abs(delta_velocity.y) / acc_verti if acc_verti != 0 else float('inf')
+
+            # Choose the smaller time for acceleration
+            time_acceleration = min(time_acceleration_hori, time_acceleration_verti)
 
             # Calculate distance traveled during acceleration
             distance_acceleration = 0.5 * (current_node.velocity + next_node.velocity) * time_acceleration
@@ -263,10 +270,12 @@ class Workspace:
             time = calculate_time(current_node, next_node)
             wind_speed = 0
             wind_angle = 0
-            linear_acceleration_x, linear_acceleration_y, linear_acceleration_z = 5, 0, 1
             velocity_x = (next_node.x - current_node.x) / time
             velocity_y = (next_node.y - current_node.y) / time
             velocity_z = (next_node.y - current_node.y) / time
+            linear_acceleration_x = velocity_x / time
+            linear_acceleration_y = velocity_y / time
+            linear_acceleration_z = velocity_z / time
 
             input_array = [[time, wind_speed, wind_angle,
                             next_node.x, next_node.y, next_node.z,
