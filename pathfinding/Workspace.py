@@ -207,9 +207,8 @@ class Workspace:
 
         def calculate_time(current_node, next_node):
             d = distance(current_node, next_node)
-
-            acc_hori = 5  # Horizontal acceleration=5 m/s^2
-            acc_verti = 1  # vertical acceleration=1 m/s^2
+            acc_hori = 5 # Horizontal acceleration=5 m/s^2
+            acc_verti = 1 # vertical acceleration=1 m/s^2
 
             # Calculate time to accelerate from current velocity to next velocity
             delta_velocity = next_node.velocity - current_node.velocity
@@ -235,8 +234,6 @@ class Workspace:
 
             # Total time is sum of time to accelerate and time to travel remaining distance
             return time_acceleration + time_travel
-
-        pq = [0, start_node]
 
         def get_neighbors(node):
             neighbors = []
@@ -268,12 +265,35 @@ class Workspace:
             time = calculate_time(current_node, next_node)
             wind_speed = 0
             wind_angle = 0
-            velocity_x = (next_node.x - current_node.x) / time
-            velocity_y = (next_node.y - current_node.y) / time
-            velocity_z = (next_node.y - current_node.y) / time
-            linear_acceleration_x = velocity_x / time
-            linear_acceleration_y = velocity_y / time
-            linear_acceleration_z = velocity_z / time
+            if time == 0:
+                velocity_x = 0
+            else:
+                velocity_x = (next_node.x - current_node.x) / time
+
+            if time == 0:
+                velocity_y = 0
+            else:
+                velocity_y = (next_node.x - current_node.x) / time
+
+            if time == 0:
+                velocity_z = 0
+            else:
+                velocity_z = (next_node.x - current_node.x) / time
+
+            if time == 0 or velocity_x == 0:
+                linear_acceleration_x = 0
+            else:
+                linear_acceleration_x = velocity_x / time
+
+            if time == 0 or velocity_y == 0:
+                linear_acceleration_y = 0
+            else:
+                linear_acceleration_y = velocity_y / time
+
+            if time == 0 or velocity_z == 0:
+                linear_acceleration_z = 0
+            else:
+                linear_acceleration_z = velocity_z / time
 
             input_array = [[time, wind_speed, wind_angle,
                             next_node.x, next_node.y, next_node.z,
@@ -285,7 +305,7 @@ class Workspace:
 
             power_joule = power(target_labels)
 
-            # print("Heuristic power:", *power_joule)
+            print("Heuristic power:", *power_joule)
 
             return power_joule
 
@@ -310,13 +330,16 @@ class Workspace:
 
             for neighbor in get_neighbors(current):
                 # Calculate the energy for the neighbor using the heuristic function
-                    for velocity in velocities:
-                        neighbor_energy = visited[current] + heuristic_power(current, neighbor)
+                for velocity in velocities:
+                    g_cost = visited[current]  # Actual cost to reach the current node
+                    h_cost = heuristic_power(current,
+                                             neighbor)  # Estimated cost to reach the goal from the current node
+                    f_cost = g_cost + h_cost  # Total cost
 
-                        if neighbor not in visited or neighbor_energy < visited[neighbor]:
-                            visited[neighbor] = neighbor_energy
-                            predecessor[neighbor] = current
-                            heapq.heappush(pq, (neighbor_energy, neighbor))
+                    if neighbor not in visited or f_cost < visited[neighbor]:
+                        visited[neighbor] = f_cost
+                        predecessor[neighbor] = current
+                        heapq.heappush(pq, (f_cost, neighbor))  # Use the f cost as the priority
 
         path = []
         current = end_node
