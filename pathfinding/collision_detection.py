@@ -34,6 +34,12 @@ def check_segment_intersects_blockages(xs, ys, zs, blockages):
     Check if a line segment intersects with any blockage in 3D space.
     """
 
+    # Check if xs, ys, zs are arrays or integers
+    if isinstance(xs, (int, float)):
+        xs = [xs]
+        ys = [ys]
+        zs = [zs]
+
     for blockage in blockages:
         # Extract blockage properties
         block_position = blockage[1]

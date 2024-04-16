@@ -21,7 +21,7 @@ def setup_workspace():
     space.add_blockage(blockage_matrix_2, position_2)
 
     # Add Windfield
-    # Call add_wind_field
+    space.add_wind_field(315, 10)
     return space
 
 
@@ -46,11 +46,13 @@ def find_and_show_optimal_path():
                    (160, 200, 30), (160, 120, 30), (160, 119, 30), (119, 119, 30), (119, 201, 30),
                    (161, 201, 30), (161, 119, 30)]
 
+    flight_path = [(0, 0, 0), (50, 50, 30)]
+
     workspace.add_flight_path(flight_path=flight_path)
 
     # Options: 2D or 3D
-    workspace.plot_space(dimension='2D', dpi=800)
-    workspace.plot_space(dimension='3D', dpi=800)
+    workspace.plot_space(dimension='2D', dpi=800, show_wind=True)
+    # workspace.plot_space(dimension='3D', dpi=800)
 
 
 if __name__ == '__main__':
