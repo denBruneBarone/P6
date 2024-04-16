@@ -1,6 +1,10 @@
 import os
 import pickle
 import matplotlib.pyplot as plt
+import numpy as np
+
+import pathfinding.collision_detection
+from pathfinding import collision_detection
 import heapq
 import math
 from pathfinding.Node import Node
@@ -51,27 +55,30 @@ class Workspace:
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)
 
-    def plot_space(self, dimension='3D', dpi=300):
+    def plot_flight_paths(self, ax, dimension):
         if dimension == '3D':
-            '''
-            The code below: iterates over each flight path and extracts the x, y, and z coordinates.
-            Then, it breaks down each flight path into segments.
-            For each segment, it checks if there is any intersection with any blockage by calling the check_segment_intersects_blockage method.
-            If any segment intersects with any blockage, it plots that segment in orange (color='orange') and then continues to the next segment.
-            If a segment does not intersect with any blockage, it plots it in blue (color='b').
-            This process continues until all segments of the flight path have been processed.
-            '''
-            fig = plt.figure(dpi=dpi)
-            ax = fig.add_subplot(111, projection='3d')
+            # Plot flight paths
+            for flight_path in self.flight_paths:
+                xs, ys, zs = zip(*flight_path)
 
-            # Plot origin
-            ax.scatter(0, 0, 0, color='k')
+                # Iterate over each segment of the flight path
+                for i in range(len(xs) - 1):
+                    # Extract coordinates for the current segment
+                    x_coords = [xs[i], xs[i + 1]]
+                    y_coords = [ys[i], ys[i + 1]]
+                    z_coords = [zs[i], zs[i + 1]]
 
-            # Plot blockages
-            for blockage_matrix, position in self.blockages:
-                x, y, z = position
-                ax.bar3d(x, y, z, *blockage_matrix.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5)
+                    # # Check if the current segment intersects with any blockage
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords, z_coords,
+                                                                               self.blockages)
 
+                    # Plot the segment in the appropriate color
+                    if segment_intersects:
+                        ax.plot(x_coords, y_coords, z_coords, color='r', alpha=0.5)
+                    else:
+                        ax.plot(x_coords, y_coords, z_coords, color='g', alpha=0.5)
+            return ax
+        elif dimension == '2D':
             # Plot flight paths
             for flight_path in self.flight_paths:
                 xs, ys, zs = zip(*flight_path)
@@ -84,16 +91,30 @@ class Workspace:
                     z_coords = [zs[i], zs[i + 1]]
 
                     # Check if the current segment intersects with any blockage
-                    segment_intersects = any(
-                        self.check_segment_intersects_blockage(x_coords, y_coords, z_coords, blockage)
-                        for blockage in self.blockages
-                    )
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords, z_coords,
+                                                                               self.blockages)
 
                     # Plot the segment in the appropriate color
                     if segment_intersects:
-                        ax.plot(x_coords, y_coords, z_coords, color='r', alpha=0.5)
+                        ax.plot(x_coords, y_coords, color='r', alpha=0.5)
                     else:
-                        ax.plot(x_coords, y_coords, z_coords, color='g', alpha=0.5)
+                        ax.plot(x_coords, y_coords, color='g', alpha=0.5)
+            return ax
+
+    def plot_space(self, dimension='3D', dpi=300):
+        if dimension == '3D':
+            fig = plt.figure(dpi=dpi)
+            ax = fig.add_subplot(111, projection='3d')
+
+            # Plot origin
+            ax.scatter(0, 0, 0, color='k')
+
+            # Plot blockages
+            for blockage_matrix, position in self.blockages:
+                x, y, z = position
+                ax.bar3d(x, y, z, *blockage_matrix.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5)
+
+            ax = self.plot_flight_paths(ax, dimension='3D')
 
             # Set labels and limits
             ax.set_xlabel('X')
@@ -114,27 +135,7 @@ class Workspace:
                 x, y = position[:2]
                 ax.add_patch(plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='k'))
 
-            # Plot flight paths
-            for flight_path in self.flight_paths:
-                xs, ys, _ = zip(*flight_path)
-
-                # Iterate over each segment of the flight path
-                for i in range(len(xs) - 1):
-                    # Extract coordinates for the current segment
-                    x_coords = [xs[i], xs[i + 1]]
-                    y_coords = [ys[i], ys[i + 1]]
-
-                    # Check if the current segment intersects with any blockage
-                    segment_intersects = any(
-                        self.check_segment_intersects_blockage(x_coords, y_coords, None, blockage)
-                        for blockage in self.blockages
-                    )
-
-                    # Plot the segment in the appropriate color
-                    if segment_intersects:
-                        ax.plot(x_coords, y_coords, color='r', alpha=0.5)
-                    else:
-                        ax.plot(x_coords, y_coords, color='g', alpha=0.5)
+            ax = self.plot_flight_paths(ax, dimension='2D')
 
             # Set labels and limits
             ax.set_xlabel('X')
@@ -356,3 +357,158 @@ class Workspace:
 
         return path_coordinates
 
+
+    def generate_random_path(self):
+        # Access blockages directly from the workspace
+        blockages = self.blockages
+
+        # Generate random flight path data
+        num_points = 50  # Number of points in the flight path
+        min_coord, max_coord = 0, 400  # Range for coordinates in each dimension of x and z
+        min_coord_z, max_coord_z = 0, 60
+
+        # Generate random x, y, z coordinates for the flight path while avoiding blockages
+        flight_path = []
+        for _ in range(num_points):
+            # Generate random coordinates
+            x_coord = np.random.randint(min_coord, max_coord)
+            y_coord = np.random.randint(min_coord, max_coord)
+            z_coord = np.random.randint(min_coord_z, max_coord_z)  # Adjusted for z-axis (height)
+            print(f"Generated coordinates: ({x_coord}, {y_coord}, {z_coord})")
+
+            # Check if the generated coordinates are within any blockages
+            while any(
+                    blockage[1][0] <= x_coord < blockage[1][0] + blockage[0].shape[0] and
+                    blockage[1][1] <= y_coord < blockage[1][1] + blockage[0].shape[1] and
+                    blockage[1][2] <= z_coord < blockage[1][2] + blockage[0].shape[2]
+                    for blockage in blockages
+            ):
+                # Regenerate coordinates until they are outside all blockages
+                x_coord = np.random.randint(min_coord, max_coord)
+                y_coord = np.random.randint(min_coord, max_coord)
+                z_coord = np.random.randint(min_coord, max_coord // 4)
+
+                print(f"Regenerated coordinates: ({x_coord}, {y_coord}, {z_coord})")
+
+            # Append the valid coordinates to the flight path
+            flight_path.append((x_coord, y_coord, z_coord))
+
+        return flight_path
+
+    @staticmethod
+    def generate_path_completely_fill_blockage(grid_size=400, blockage_size=50, blockage_x=250, blockage_y=250):
+        path = []
+
+        # Moving along the top boundary
+        for x in range(0, grid_size):
+            path.append((x, 0, 0))
+
+        # Zigzag pattern towards the blockage from the top
+        for y in range(1, grid_size):
+            if y % 2 == 1:  # Odd rows move right
+                for x in range(grid_size - 1, -1, -1):
+                    path.append((x, y, 0))
+            else:  # Even rows move left
+                for x in range(0, grid_size):
+                    path.append((x, y, 0))
+
+        return path
+
+
+    def find_baseline_path(self, mission):
+        start_node = mission.start
+        end_node = mission.end
+        blockages = self.blockages
+
+        h = 10 * math.sqrt(2)
+        directions = [ # 8 directions, z-index always 0.
+            (h, h, 0),
+            (20, 0, 0),
+            (h, -h, 0),
+
+            (0, 20, 0),
+
+            (0, -20, 0),
+
+            (-h, h, 0),
+            (-20, 0, 0),
+            (-h, -h, 0),
+        ]
+
+        def distance(node1, node2):
+            dist_x = (node1.x - node2.x) ** 2
+            dist_y = (node1.y - node2.y) ** 2
+            return math.sqrt(dist_x + dist_y)
+
+        def heuristic_distance(node):
+            return distance(node, end_node)
+
+        def get_neighbors(node):
+            neighbors = []
+
+            # if next to goal
+            if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20:
+                neighbors.append(end_node)
+
+            else:
+                for dist_x, dist_y, dist_z in directions:
+                    new_x = node.x + dist_x
+                    new_y = node.y + dist_y
+                    new_z = node.z + dist_z
+                    new_node = Node(new_x, new_y, new_z)
+                    neighbors.append(new_node)
+            return neighbors
+
+        pq = [(0, start_node)]
+
+        visited = {start_node: 0}
+        predecessor = {}
+
+        while pq:
+            _, current = heapq.heappop(pq)
+
+            if current == end_node:
+                break
+
+            for neighbor in get_neighbors(current):
+                # Calculate tentative distance through current node
+                tentative_distance = visited[current] + distance(current, neighbor)
+
+                # If the tentative distance is less than the recorded distance to the neighbor, update it
+                if neighbor not in visited or tentative_distance < visited[neighbor]:
+                    visited[neighbor] = tentative_distance
+                    heapq.heappush(pq, (tentative_distance + heuristic_distance(neighbor), neighbor))
+                    predecessor[neighbor] = current
+
+                # Reconstruct the path
+        path = []
+        current = end_node
+        while current in predecessor:
+            path.insert(0, current)
+            current = predecessor[current]
+        path.insert(0, start_node)
+
+        xs = []
+        ys = []
+        zs = []
+
+        for point in path:
+            xs.append(point.x)
+            ys.append(point.y)
+            zs.append(point.z)
+
+        z_target = pathfinding.collision_detection.check_segment_intersects_blockages(xs, ys, zs, blockages, return_intersection_z_value=True)
+        baseline_path = []
+
+        baseline_path.append(start_node)
+        for coordinate in path:
+            new_coordinate = Node(coordinate.x, coordinate.y, z_target + 5) # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+            baseline_path.append(new_coordinate)
+
+        baseline_path.append(end_node)
+
+        path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
+
+        print(path_coordinates)
+
+        return path_coordinates
