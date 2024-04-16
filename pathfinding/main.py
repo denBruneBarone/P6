@@ -30,7 +30,7 @@ def find_and_show_optimal_path():
     workspace = setup_workspace()
     mission = Mission(Node(0, 0, 0), Node(200, 350, 0), 500)
 
-    flight_path = workspace.find_optimal_path(mission)
+    flight_path = workspace.find_baseline_path(mission)
     # flight_path = generate_random_path(workspace)
     #
     # flight_path = [(0, 0, 0),

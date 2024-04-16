@@ -3,6 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
+import pathfinding.collision_detection
 from pathfinding import collision_detection
 import heapq
 import math
@@ -391,3 +392,102 @@ class Workspace:
                     path.append((x, y, 0))
 
         return path
+
+
+    def find_baseline_path(self, mission):
+        start_node = mission.start
+        end_node = mission.end
+        blockages = self.blockages
+
+        h = 10 * math.sqrt(2)
+        directions = [ # 8 directions, z-index always 0.
+            (h, h, 0),
+            (20, 0, 0),
+            (h, -h, 0),
+
+            (0, 20, 0),
+
+            (0, -20, 0),
+
+            (-h, h, 0),
+            (-20, 0, 0),
+            (-h, -h, 0),
+        ]
+
+        def distance(node1, node2):
+            dist_x = (node1.x - node2.x) ** 2
+            dist_y = (node1.y - node2.y) ** 2
+            return math.sqrt(dist_x + dist_y)
+
+        def heuristic_distance(node):
+            return distance(node, end_node)
+
+        def get_neighbors(node):
+            neighbors = []
+
+            # if next to goal
+            if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20:
+                neighbors.append(end_node)
+
+            else:
+                for dist_x, dist_y, dist_z in directions:
+                    new_x = node.x + dist_x
+                    new_y = node.y + dist_y
+                    new_z = node.z + dist_z
+                    new_node = Node(new_x, new_y, new_z)
+                    neighbors.append(new_node)
+            return neighbors
+
+        pq = [(0, start_node)]
+
+        visited = {start_node: 0}
+        predecessor = {}
+
+        while pq:
+            _, current = heapq.heappop(pq)
+
+            if current == end_node:
+                break
+
+            for neighbor in get_neighbors(current):
+                # Calculate tentative distance through current node
+                tentative_distance = visited[current] + distance(current, neighbor)
+
+                # If the tentative distance is less than the recorded distance to the neighbor, update it
+                if neighbor not in visited or tentative_distance < visited[neighbor]:
+                    visited[neighbor] = tentative_distance
+                    heapq.heappush(pq, (tentative_distance + heuristic_distance(neighbor), neighbor))
+                    predecessor[neighbor] = current
+
+                # Reconstruct the path
+        path = []
+        current = end_node
+        while current in predecessor:
+            path.insert(0, current)
+            current = predecessor[current]
+        path.insert(0, start_node)
+
+        xs = []
+        ys = []
+        zs = []
+
+        for point in path:
+            xs.append(point.x)
+            ys.append(point.y)
+            zs.append(point.z)
+
+        z_target = pathfinding.collision_detection.check_segment_intersects_blockages(xs, ys, zs, blockages, return_intersection_z_value=True)
+        baseline_path = []
+
+        baseline_path.append(start_node)
+        for coordinate in path:
+            new_coordinate = Node(coordinate.x, coordinate.y, z_target + 5) # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+            baseline_path.append(new_coordinate)
+
+        baseline_path.append(end_node)
+
+        path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
+
+        print(path_coordinates)
+
+        return path_coordinates

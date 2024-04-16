@@ -6,7 +6,7 @@ def ray_intersects_blockage(start, end, block_position, block_size):
     Check if a ray defined by a line segment intersects with a blockage in 3D space.
     """
 
-    # Calculate direction vector of the ray
+    # Calculate direction vector of the ray--
     direction = end - start
 
     # Check for intersection with each face of the blockage
@@ -26,13 +26,17 @@ def ray_intersects_blockage(start, end, block_position, block_size):
             if start[i] < block_position[i] or start[i] > block_position[i] + block_size[i]:
                 return False  # No intersection
 
-    return True  # Intersection detected
+
+    return block_position[2] + block_size[2]  # Z-coordinate of the upper surface of the blockage
 
 
-def check_segment_intersects_blockages(xs, ys, zs, blockages):
+def check_segment_intersects_blockages(xs, ys, zs, blockages, return_intersection_z_value=False):
     """
     Check if a line segment intersects with any blockage in 3D space.
     """
+    # TODO: ændr formattet til tuples eller Nodes
+
+    max_z_intersection = float("-inf")
 
     for blockage in blockages:
         # Extract blockage properties
@@ -46,7 +50,13 @@ def check_segment_intersects_blockages(xs, ys, zs, blockages):
 
             # Check if the segment intersects with the blockage using ray tracing
             intersect = ray_intersects_blockage(start, end, block_position, (block_size_x, block_size_y, block_size_z))
-            if intersect:
-                return True
+            if intersect is not False:
+                if return_intersection_z_value:
+                    max_z_intersection = max(max_z_intersection, max(start[2], end[2]), intersect)
+                else:
+                    return True
 
-    return False
+    if return_intersection_z_value:
+        return max_z_intersection
+    else:
+        return False
