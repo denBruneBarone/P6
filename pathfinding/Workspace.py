@@ -208,15 +208,16 @@ class Workspace:
 
         def calculate_time(current_node, next_node):
             d = distance(current_node, next_node)
-            acc_hori = 5 # Horizontal acceleration=5 m/s^2
-            acc_verti = 1 # vertical acceleration=1 m/s^2
+            acc_hori = 5  # Horizontal acceleration=5 m/s^2
+            acc_verti = 1  # vertical acceleration=1 m/s^2
 
             # Calculate time to accelerate from current velocity to next velocity
-            delta_velocity = next_node.velocity - current_node.velocity
+            delta_velocity = next_node.velocity - current_node.velocity if current_node != start_node and next_node != end_node else 0
             time_acceleration = abs(delta_velocity) / max(acc_hori, acc_verti)
 
             # Calculate distance traveled during acceleration
-            distance_acceleration = 0.5 * (current_node.velocity + next_node.velocity) * time_acceleration
+            distance_acceleration = 0.5 * (
+                        current_node.velocity + next_node.velocity) * time_acceleration if current_node != start_node and next_node != end_node else 0
 
             if next_node.velocity == 0 and next_node == end_node:
                 return time_acceleration
@@ -266,34 +267,19 @@ class Workspace:
             time = calculate_time(current_node, next_node)
             wind_speed = 0
             wind_angle = 0
-            if time == 0:
+            if time == 0 or current_node == start_node or next_node == end_node:
                 velocity_x = 0
-            else:
-                velocity_x = (next_node.x - current_node.x) / time
-
-            if time == 0:
                 velocity_y = 0
-            else:
-                velocity_y = (next_node.x - current_node.x) / time
-
-            if time == 0:
                 velocity_z = 0
-            else:
-                velocity_z = (next_node.x - current_node.x) / time
-
-            if time == 0 or velocity_x == 0:
                 linear_acceleration_x = 0
-            else:
-                linear_acceleration_x = velocity_x / time
-
-            if time == 0 or velocity_y == 0:
                 linear_acceleration_y = 0
-            else:
-                linear_acceleration_y = velocity_y / time
-
-            if time == 0 or velocity_z == 0:
                 linear_acceleration_z = 0
             else:
+                velocity_x = (next_node.x - current_node.x) / time
+                velocity_y = (next_node.y - current_node.y) / time
+                velocity_z = (next_node.z - current_node.z) / time
+                linear_acceleration_x = velocity_x / time
+                linear_acceleration_y = velocity_y / time
                 linear_acceleration_z = velocity_z / time
 
             input_array = [[time, wind_speed, wind_angle,
