@@ -185,6 +185,9 @@ class Workspace:
         # TODO: Caspar: Maybe here call plot_space to show the workspace
         start_node = mission.start
         end_node = mission.end
+        end_node.velocity_x = 0
+        end_node.velocity_y = 0
+        end_node.velocity_z = 0
         payload = mission.payload
         blockages = []
         wind_field = self.wind_field
@@ -196,54 +199,83 @@ class Workspace:
             (h, -h, 0), (h, -h, 3), (h, -h, -3),
 
             (0, 20, 0), (0, 20, 3), (0, 20, -3),
-            (0, 0, 0), (0, 0, 3), (0, 0, -3),
+            #(0, 0, 0),
+            (0, 0, 3), (0, 0, -3),
             (0, -20, 0), (0, -20, 3), (0, -20, -3),
 
             (-h, h, 0), (-h, h, 3), (-h, h, -3),
             (-20, 0, 0), (-20, 0, 3), (-20, 0, -3),
             (-h, -h, 0), (-h, -h, 3), (-h, -h, -3),
         ]
-
-        velocities = (5, 10, 15)
+        # 4, 6, 8, 10, 12
+        velocities = (10, 12)
 
         def calculate_time(current_node, next_node):
-            d = distance(current_node, next_node)
-            acc_hori = 5  # Horizontal acceleration=5 m/s^2
-            acc_verti = 1  # vertical acceleration=1 m/s^2
+            def set_velocity_axis_return_distance(axis, current_node, next_node):
+                current_velocity = current_node.velocity
+                next_velocity = next_node.velocity
 
-            # Calculate time to accelerate from current velocity to next velocity
-            delta_velocity = next_node.velocity - current_node.velocity if current_node != start_node and next_node != end_node else 0
-            time_acceleration = abs(delta_velocity) / max(acc_hori, acc_verti)
+                diff_coord = abs(getattr(next_node, axis) - getattr(current_node, axis))
 
-            # Calculate distance traveled during acceleration
-            distance_acceleration = 0.5 * (
-                        current_node.velocity + next_node.velocity) * time_acceleration if current_node != start_node and next_node != end_node else 0
+                if current_velocity == 0:
+                    setattr(current_node, 'velocity_' + axis, 0)
 
-            if next_node.velocity == 0 and next_node == end_node:
-                return time_acceleration
+                if next_velocity == 0:
+                    return diff_coord
 
-            if next_node.velocity == 0:
-                return 1e9
+                # TODO: Skriv i paper
+                if axis != 'z':
+                    setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity))
+                else:
+                    setattr(next_node, 'velocity_' + axis, diff_coord / (3 / next_velocity))
 
-            # Calculate remaining distance
-            remaining_distance = d - distance_acceleration
+                return diff_coord
 
-            if remaining_distance <= 0:
-                return time_acceleration
+            time_axes = []
+            for axis in ['x', 'y', 'z']:
+                dist = set_velocity_axis_return_distance(axis, current_node, next_node)
 
-            # Calculate time to travel remaining distance at next velocity
-            time_travel = remaining_distance / next_node.velocity
+                velocity_current_axis = getattr(current_node, 'velocity_' + axis)
+                velocity_next_axis = getattr(next_node, 'velocity_' + axis)
+                t1 = 0
+                t2 = 0
 
-            # Total time is sum of time to accelerate and time to travel remaining distance
-            return time_acceleration + time_travel
+                if axis != 'z':
+                    a = 5
+                else:
+                    a = 1
+
+                if velocity_current_axis == 0 and velocity_next_axis == 0:
+                    pass
+
+                elif velocity_next_axis != 0:
+                    t1 = abs((velocity_next_axis - velocity_current_axis) / a)
+                    if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
+                        t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
+                              / abs(velocity_next_axis))
+
+                else:
+                    t1 = abs((velocity_next_axis - velocity_current_axis) / a)
+                    if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
+                        t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
+                              / abs(velocity_current_axis))
+                time = t1 + t2
+                time_axes.append(time)
+
+            max_time = max(time_axes)
+            if max_time == 0:
+                print('time is 0')
+            return max_time
 
         def get_neighbors(node):
             neighbors = []
 
             # if next to goal
-            if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20 and abs(
-                    node.z - end_node.z) <= 3:
+            if distance_h(end_node, node) <= 20 and distance_v(end_node, node) <= 3:
                 end_node.velocity = 0
+                end_node.velocity_x = 0
+                end_node.velocity_y = 0
+                end_node.velocity_z = 0
                 neighbors.append(end_node)
 
             else:
@@ -257,52 +289,39 @@ class Workspace:
             return neighbors
 
         # TODO: Rune og Lucas: dist_x + dist_y <= 20, dist_z <= 3  --- se paper side 8 afsnit b
-        def distance(node1, node2):
+        def distance_h(node1, node2):
             dist_x = (node1.x - node2.x) ** 2
             dist_y = (node1.y - node2.y) ** 2
-            dist_z = (node1.z - node2.z) ** 2
-            return math.sqrt(dist_x + dist_y + dist_z)
+            return math.sqrt(dist_x + dist_y)
+
+        def distance_v(node1, node2):
+            return abs(node1.z - node2.z)
 
         def heuristic_power(current_node, next_node):
             time = calculate_time(current_node, next_node)
             wind_speed = 0
             wind_angle = 0
-            if time == 0 or current_node == start_node or next_node == end_node:
-                velocity_x = 0
-                velocity_y = 0
-                velocity_z = 0
-                linear_acceleration_x = 0
-                linear_acceleration_y = 0
-                linear_acceleration_z = 0
-            else:
-                velocity_x = (next_node.x - current_node.x) / time
-                velocity_y = (next_node.y - current_node.y) / time
-                velocity_z = (next_node.z - current_node.z) / time
-                linear_acceleration_x = velocity_x / time
-                linear_acceleration_y = velocity_y / time
-                linear_acceleration_z = velocity_z / time
+
+            if current_node == end_node:
+                # raise Exception("current is end")
+                return 0
+            linear_acceleration_x = next_node.velocity_x / time
+            linear_acceleration_y = next_node.velocity_y / time
+            linear_acceleration_z = next_node.velocity_z / time
 
             input_array = [[time, wind_speed, wind_angle,
                             next_node.x, next_node.y, next_node.z,
-                            velocity_x, velocity_y, velocity_z,
+                            next_node.velocity_x, next_node.velocity_y, next_node.velocity_z,
                             linear_acceleration_x, linear_acceleration_y, linear_acceleration_z,
                             payload]]
 
             target_labels = ml_model.predict(input_array)
 
-            power_joule = power(target_labels)
+            power_watt = power(target_labels)
 
-            print("Heuristic power:", *power_joule)
+            power_joule = int(*power_watt * time)
 
             return power_joule
-
-        def heuristic_distance(node):
-            dist = distance(node, end_node)
-
-            if node.z < 30:
-                dist += 30 - node.z
-
-            return dist
 
         pq = [(0, start_node)]
 
@@ -318,15 +337,16 @@ class Workspace:
             for neighbor in get_neighbors(current):
                 # Calculate the energy for the neighbor using the heuristic function
                 for velocity in velocities:
-                    g_cost = visited[current]  # Actual cost to reach the current node
-                    h_cost = heuristic_power(current,
+                    neighbor.velocity = velocity
+                    c_cost = visited[current]  # Actual cost to reach the current node
+                    n_cost = heuristic_power(current,
                                              neighbor)  # Estimated cost to reach the goal from the current node
-                    f_cost = g_cost + h_cost  # Total cost
+                    t_cost = c_cost + n_cost  # Total cost
 
-                    if neighbor not in visited or f_cost < visited[neighbor]:
-                        visited[neighbor] = f_cost
+                    if neighbor not in visited or t_cost < visited[neighbor]:
+                        visited[neighbor] = t_cost
                         predecessor[neighbor] = current
-                        heapq.heappush(pq, (f_cost, neighbor))  # Use the f cost as the priority
+                        heapq.heappush(pq, (t_cost + heuristic_power(neighbor, end_node), neighbor))  # Use the f cost as the priority
 
         path = []
         current = end_node
@@ -399,7 +419,6 @@ class Workspace:
                     path.append((x, y, 0))
 
         return path
-
 
     def find_baseline_path(self, mission):
         start_node = mission.start
