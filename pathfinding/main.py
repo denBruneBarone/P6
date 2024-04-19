@@ -6,6 +6,7 @@ import numpy as np
 def setup_workspace():
     # Example usage
     dimensions = 3  # Define a 3-dimensional space
+
     max_bounds = [400, 400, 60]  # Define maximum bounds for each dimension
 
     space = Workspace(dimensions, max_bounds)
@@ -21,7 +22,8 @@ def setup_workspace():
     space.add_blockage(blockage_matrix_2, position_2)
 
     # Add Windfield
-    space.add_wind_field(315, 10)
+    space.add_wind_field(135, 10)
+
     return space
 
 
@@ -34,19 +36,19 @@ def find_and_show_optimal_path():
     # flight_path = workspace.generate_path_completely_fill_blockage()
 
     #
-    flight_path = [(0, 0, 0),
-                   (250, 250, 30),  # 1
-                   (300, 300, 30),  # 2
-                   (320, 320, 30), (230, 320, 30),
-                   (250, 300, 30),  # 3
-                   (275, 275, 30),
-                   (300, 250, 30),  # 4
-                   (320, 230, 30), (230, 230, 30), (230, 275, 30), (310, 275, 30), (310, 310, 30),
-                   (275, 310, 30), (275, 275, 30), (275, 230, 30), (275, 120, 30), (120, 120, 30), (120, 200, 30),
-                   (160, 200, 30), (160, 120, 30), (160, 119, 30), (119, 119, 30), (119, 201, 30),
-                   (161, 201, 30), (161, 119, 30)]
+    # flight_path = [(0, 0, 0),
+    #                (250, 250, 30),  # 1
+    #                (300, 300, 30),  # 2
+    #                (320, 320, 30), (230, 320, 30),
+    #                (250, 300, 30),  # 3
+    #                (275, 275, 30),
+    #                (300, 250, 30),  # 4
+    #                (320, 230, 30), (230, 230, 30), (230, 275, 30), (310, 275, 30), (310, 310, 30),
+    #                (275, 310, 30), (275, 275, 30), (275, 230, 30), (275, 120, 30), (120, 120, 30), (120, 200, 30),
+    #                (160, 200, 30), (160, 120, 30), (160, 119, 30), (119, 119, 30), (119, 201, 30),
+    #                (161, 201, 30), (161, 119, 30)]
 
-    flight_path = [(0, 0, 0), (50, 50, 30)]
+    flight_path = [(0, 0, 0), (150, 150, 30), (180, 180, 30)]
 
     workspace.add_flight_path(flight_path=flight_path)
 
