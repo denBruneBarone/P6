@@ -72,9 +72,9 @@ class Workspace:
         self.wind_angle = angle
 
         # Create a grid of coordinates
-        x = np.linspace(0, self.max_bounds[0], self.grid_size)
-        y = np.linspace(0, self.max_bounds[1], self.grid_size)
-        X, Y = np.meshgrid(x, y)
+        # x = np.linspace(0, self.max_bounds[0], self.grid_size)
+        # y = np.linspace(0, self.max_bounds[1], self.grid_size)
+        # X, Y = np.meshgrid(x, y)
 
         # Initialize wind speed grid
         wind_speed_grid = np.zeros((self.max_bounds[0], self.max_bounds[1]))
@@ -116,16 +116,17 @@ class Workspace:
             # Check for blockages at the current point
 
             for i in range(start_point[0], end_point[0] + x_step, x_step):
+                xs = [start_point[0], x + x_step]
+
                 for j in range(start_point[1], end_point[1] + y_step, y_step):
-                    xs = [x, x + x_step]
-                    ys = [y, y + y_step]
+                    ys = [start_point[1], y + y_step]
 
                     if not collision_detection.check_segment_intersects_blockages(xs, ys, [0, 0], self.blockages):
                         # Store the wind speed in the grid
                         wind_speed_grid[x, y] = wind_speed
                     else:
                         # If there is a blockage, stop casting the ray
-                        break
+                        print('Found a blockage')
 
                     # Move to the next grid cell along the ray direction
                     y += y_step
@@ -228,7 +229,8 @@ class Workspace:
             # Plot blockages
             for blockage_matrix, position in self.blockages:
                 x, y = position[:2]
-                ax.add_patch(plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='k'))
+                ax.add_patch(
+                    plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='k', alpha=0.5))
 
             if show_wind:
                 grid_color = 'white'

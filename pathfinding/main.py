@@ -16,13 +16,13 @@ def setup_workspace():
     position_1 = [120, 120, 0]  # Specify the position of the blockage
     space.add_blockage(blockage_matrix_1, position_1)
 
-    # Add a blockage (building) represented as a matrix
-    blockage_matrix_2 = np.ones((50, 50, 60))  # Define a 2x2x3 blockage matrix
-    position_2 = [250, 250, 0]  # Specify the position of the blockage
-    space.add_blockage(blockage_matrix_2, position_2)
+    # # Add a blockage (building) represented as a matrix
+    # blockage_matrix_2 = np.ones((50, 50, 60))  # Define a 2x2x3 blockage matrix
+    # position_2 = [250, 250, 0]  # Specify the position of the blockage
+    # space.add_blockage(blockage_matrix_2, position_2)
 
     # Add Windfield
-    space.add_wind_field(135, 10)
+    space.add_wind_field(360, 10)
 
     return space
 
@@ -48,7 +48,7 @@ def find_and_show_optimal_path():
     #                (160, 200, 30), (160, 120, 30), (160, 119, 30), (119, 119, 30), (119, 201, 30),
     #                (161, 201, 30), (161, 119, 30)]
 
-    flight_path = [(0, 0, 0), (150, 150, 30), (180, 180, 30)]
+    flight_path = [(0, 0, 0), (110, 110, 30)]
 
     workspace.add_flight_path(flight_path=flight_path)
 
