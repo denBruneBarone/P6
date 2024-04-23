@@ -7,13 +7,13 @@ def setup_workspace():
     # Example usage
     dimensions = 3  # Define a 3-dimensional space
 
-    max_bounds = [400, 400, 60]  # Define maximum bounds for each dimension
+    max_bounds = [10, 10, 10]  # Define maximum bounds for each dimension
 
     space = Workspace(dimensions, max_bounds)
 
     # Add a blockage (building) represented as a matrix
-    blockage_matrix_1 = np.ones((40, 80, 60))  # Define a 2x2x3 blockage matrix
-    position_1 = [120, 120, 0]  # Specify the position of the blockage
+    blockage_matrix_1 = np.ones((2, 2, 10))  # Define a 2x2x3 blockage matrix
+    position_1 = [2, 2, 0]  # Specify the position of the blockage
     space.add_blockage(blockage_matrix_1, position_1)
 
     # # Add a blockage (building) represented as a matrix
@@ -22,7 +22,7 @@ def setup_workspace():
     # space.add_blockage(blockage_matrix_2, position_2)
 
     # Add Windfield
-    space.add_wind_field(360, 10)
+    space.add_wind_field(135, 10)
 
     return space
 
@@ -48,7 +48,7 @@ def find_and_show_optimal_path():
     #                (160, 200, 30), (160, 120, 30), (160, 119, 30), (119, 119, 30), (119, 201, 30),
     #                (161, 201, 30), (161, 119, 30)]
 
-    flight_path = [(0, 0, 0), (110, 110, 30)]
+    flight_path = [(0, 0, 0), (10, 10, 10)]
 
     workspace.add_flight_path(flight_path=flight_path)
 

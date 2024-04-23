@@ -17,64 +17,10 @@ class Workspace:
         self.wind_angle = 0
         self.grid_size = 100
 
-    # def add_wind_field(self, angle, wind_speed):
-    #     # Convert wind angle to radians
-    #     self.wind_angle_rad = np.radians(angle)
-    #     self.wind_angle = angle
-    #
-    #     # Create a grid of coordinates
-    #     x = np.linspace(0, self.max_bounds[0], self.grid_size)
-    #     y = np.linspace(0, self.max_bounds[1], self.grid_size)
-    #     X, Y = np.meshgrid(x, y)
-    #
-    #     # Initialize wind speed grid
-    #     wind_speed_grid = np.zeros((self.grid_size, self.grid_size))
-    #
-    #     # Determine the starting point and direction based on the wind angle
-    #     if 0 <= angle < 90:
-    #         start_point = [0, 0]  # Wind comes from the bottom-left corner
-    #         x_range = range(0, self.grid_size)
-    #         y_range = range(0, self.grid_size)
-    #     elif 90 <= angle < 180:
-    #         start_point = [self.grid_size - 1, 0]  # Wind comes from the bottom-right corner
-    #         x_range = range(self.grid_size - 1, -1, -1)
-    #         y_range = range(0, self.grid_size)
-    #     elif 180 <= angle < 270:
-    #         start_point = [self.grid_size - 1, self.grid_size - 1]  # Wind comes from the top-right corner
-    #         x_range = range(self.grid_size - 1, -1, -1)
-    #         y_range = range(self.grid_size - 1, -1, -1)
-    #     else:
-    #         start_point = [0, self.grid_size - 1]  # Wind comes from the top-left corner
-    #         x_range = range(0, self.grid_size)
-    #         y_range = range(self.grid_size - 1, -1, -1)
-    #
-    #     # Iterate over the grid in the determined direction
-    #     for i in x_range:
-    #         for j in y_range:
-    #             # Calculate the current point coordinates
-    #             x = X[i, j]
-    #             y = Y[i, j]
-    #
-    #             # Check for blockages at the current point
-    #             if not collision_detection.check_segment_intersects_blockages(x, y, 0, self.blockages):
-    #                 # Store the wind speed in the grid
-    #                 wind_speed_grid[i, j] = wind_speed
-    #             else:
-    #                 # If there is a blockage, set the wind speed to 0
-    #                 wind_speed_grid[i, j] = 0
-    #
-    #     # Store the wind speed grid in the wind field attribute
-    #     self.wind_field = wind_speed_grid
-
     def add_wind_field(self, angle, wind_speed):
         # Convert wind angle to radians
         self.wind_angle_rad = np.radians(angle)
         self.wind_angle = angle
-
-        # Create a grid of coordinates
-        # x = np.linspace(0, self.max_bounds[0], self.grid_size)
-        # y = np.linspace(0, self.max_bounds[1], self.grid_size)
-        # X, Y = np.meshgrid(x, y)
 
         # Initialize wind speed grid
         wind_speed_grid = np.zeros((self.max_bounds[0], self.max_bounds[1]))
@@ -94,6 +40,7 @@ class Workspace:
 
             x_step = 1
             y_step = -1
+
         elif 180 <= angle < 270:
             start_point = [self.max_bounds[0] - self.max_bounds[0],
                            self.max_bounds[1] - self.max_bounds[1]]  # Wind comes from the bottom-left corner
@@ -115,11 +62,15 @@ class Workspace:
         while 0 <= x < self.max_bounds[0] and 0 <= y < self.max_bounds[1]:
             # Check for blockages at the current point
 
+            print("Current position:", x, y)  # Print current position
+
             for i in range(start_point[0], end_point[0] + x_step, x_step):
                 xs = [start_point[0], x + x_step]
 
                 for j in range(start_point[1], end_point[1] + y_step, y_step):
                     ys = [start_point[1], y + y_step]
+
+                    print("Segment coordinates:", xs, ys)  # Print segment coordinates
 
                     if not collision_detection.check_segment_intersects_blockages(xs, ys, [0, 0], self.blockages):
                         # Store the wind speed in the grid
@@ -134,6 +85,35 @@ class Workspace:
                 x += x_step
 
         self.wind_field = wind_speed_grid
+
+    # def visualize_wind_field(self):
+    #     # Determine the origin based on the wind angle
+    #     if 0 <= self.wind_angle < 90:
+    #         origin = 'lower'  # Wind comes from the top-right corner
+    #     elif 90 <= self.wind_angle < 180:
+    #         origin = 'lower'  # Wind comes from the top-left corner
+    #     elif 180 <= self.wind_angle < 270:
+    #         origin = 'upper'  # Wind comes from the bottom-left corner
+    #     else:
+    #         origin = 'upper'  # Wind comes from the bottom-right corner
+    #
+    #     # Rotate and invert the wind field if needed
+    #     if 45 <= self.wind_angle < 135:
+    #         wind_field_rotated = np.rot90(self.wind_field, k=-1)  # Rotate 90 degrees to the right
+    #         wind_field = np.flipud(wind_field_rotated)  # Flip vertically (invert)
+    #     elif 135 <= self.wind_angle < 225:
+    #         wind_field = np.rot90(self.wind_field, k=-2)  # Rotate 180 degrees
+    #     elif 225 <= self.wind_angle < 315:
+    #         wind_field_rotated = np.rot90(self.wind_field, k=1)  # Rotate 90 degrees to the left
+    #         wind_field = np.flipud(wind_field_rotated)  # Flip vertically (invert)
+    #     else:
+    #         wind_field = self.wind_field
+    #
+    #     # Plot the wind field
+    #     img = plt.imshow(wind_field, cmap='viridis', origin=origin,
+    #                      extent=[0, self.max_bounds[0], 0, self.max_bounds[1]])
+    #     plt.colorbar(label='Wind speed')
+    #     return img
 
     def add_blockage(self, blockage_matrix, position):
         if len(blockage_matrix.shape) != self.dimensions:
@@ -239,16 +219,9 @@ class Workspace:
                            extent=[0, self.max_bounds[0], 0, self.max_bounds[1]])
                 plt.colorbar(label='Wind speed')
 
-                # # Plot wind direction arrow
-                # arrow_length = min(self.max_bounds) * 0.8  # Increase arrow length
-                # ax.annotate('', xy=(0, self.max_bounds[1]), xytext=(0 - arrow_length * np.cos(self.wind_angle_rad),
-                #                                                     self.max_bounds[1] - arrow_length * np.sin(
-                #                                                         self.wind_angle_rad)),
-                #             arrowprops=dict(facecolor='blue', edgecolor='blue'))  # Change arrow color to blue
-                #
                 # Plot wind direction arrow
                 # Calculate the endpoint of the arrow
-                arrow_length = 50
+                arrow_length = self.max_bounds[0] / 10
 
                 arrow_end_x = self.max_bounds[0] / 2 + arrow_length * np.cos(self.wind_angle_rad)
                 arrow_end_y = self.max_bounds[1] / 2 + arrow_length * np.sin(self.wind_angle_rad)
