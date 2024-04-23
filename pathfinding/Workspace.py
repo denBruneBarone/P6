@@ -2,6 +2,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
 import pathfinding.collision_detection
 from pathfinding import collision_detection
@@ -220,6 +221,9 @@ class Workspace:
                 if current_velocity == 0:
                     setattr(current_node, 'velocity_' + axis, 0)
 
+                if next_node == end_node:
+                    next_velocity = 0
+
                 if next_velocity == 0:
                     return diff_coord
 
@@ -310,7 +314,7 @@ class Workspace:
             linear_acceleration_z = next_node.velocity_z / time
 
             input_array = [[time, wind_speed, wind_angle,
-                            next_node.x, next_node.y, next_node.z,
+                            next_node.x-current_node.x, next_node.y-current_node.y, next_node.z-current_node.z,
                             next_node.velocity_x, next_node.velocity_y, next_node.velocity_z,
                             linear_acceleration_x, linear_acceleration_y, linear_acceleration_z,
                             payload]]
@@ -319,7 +323,7 @@ class Workspace:
 
             power_watt = power(target_labels)
 
-            power_joule = int(*power_watt * time)
+            power_joule = power_watt * time
 
             return power_joule
 
@@ -346,7 +350,11 @@ class Workspace:
                     if neighbor not in visited or t_cost < visited[neighbor]:
                         visited[neighbor] = t_cost
                         predecessor[neighbor] = current
-                        heapq.heappush(pq, (t_cost + heuristic_power(neighbor, end_node), neighbor))  # Use the f cost as the priority
+                        e_cost = heuristic_power(neighbor, end_node)
+                        a_cost = t_cost + e_cost
+                        print(f"t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}")
+
+                        heapq.heappush(pq, (a_cost , neighbor))  # Use the f cost as the priority
 
         path = []
         current = end_node
@@ -517,3 +525,23 @@ class Workspace:
         print(path_coordinates)
 
         return path_coordinates
+
+
+def check_model():
+    input_array = [[50, 0, 0, # time, wind_speed, wind_angle
+                    100, 100, 0, # postions
+                    4, 0, 0, # velocities
+                    4, 0, 0, #accelerations
+                    500 # payloads
+                    ]]
+
+    target_labels = ml_model.predict(input_array)
+    return target_labels
+
+target_labels = check_model()
+print(target_labels)
+
+pow_res = power(target_labels)
+
+print(pow_res)
+
