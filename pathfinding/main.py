@@ -30,6 +30,7 @@ def setup_workspace():
 def find_and_show_optimal_path():
     workspace = setup_workspace()
     mission = Mission(Node(0, 0, 0), Node(110, 250, 0), 500)
+    flight_path = workspace.find_optimal_path(mission)
 
     # flight_path = [(0, 0, 0),
     #                (250, 250, 30),  # 1
@@ -43,13 +44,13 @@ def find_and_show_optimal_path():
     #                (160, 200, 30), (160, 120, 30), (160, 119, 30), (119, 119, 30), (119, 201, 30),
     #                (161, 201, 30), (161, 119, 30)]
 
-    flight_path = [(0, 0, 0), (10, 10, 10)]
+    # flight_path = [(0, 0, 0), (10, 10, 10)]
 
     workspace.add_flight_path(flight_path=flight_path)
 
     # Options: 2D or 3D
     workspace.plot_space(dimension='2D', dpi=800, show_wind=True)
-    # workspace.plot_space(dimension='3D', dpi=800)
+    workspace.plot_space(dimension='3D', dpi=800)
 
 
 if __name__ == '__main__':

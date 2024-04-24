@@ -314,7 +314,7 @@ class Workspace:
             (h, -h, 0), (h, -h, 3), (h, -h, -3),
 
             (0, 20, 0), (0, 20, 3), (0, 20, -3),
-            #(0, 0, 0),
+            # (0, 0, 0),
             (0, 0, 3), (0, 0, -3),
             (0, -20, 0), (0, -20, 3), (0, -20, -3),
 
@@ -428,7 +428,7 @@ class Workspace:
             linear_acceleration_z = next_node.velocity_z / time
 
             input_array = [[time, wind_speed, wind_angle,
-                            next_node.x-current_node.x, next_node.y-current_node.y, next_node.z-current_node.z,
+                            next_node.x - current_node.x, next_node.y - current_node.y, next_node.z - current_node.z,
                             next_node.velocity_x, next_node.velocity_y, next_node.velocity_z,
                             linear_acceleration_x, linear_acceleration_y, linear_acceleration_z,
                             payload]]
@@ -468,7 +468,7 @@ class Workspace:
                         a_cost = t_cost + e_cost
                         print(f"t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}")
 
-                        heapq.heappush(pq, (a_cost , neighbor))  # Use the f cost as the priority
+                        heapq.heappush(pq, (a_cost, neighbor))  # Use the f cost as the priority
 
         path = []
         current = end_node
@@ -484,7 +484,6 @@ class Workspace:
         print(path_coordinates)
 
         return path_coordinates
-
 
     def generate_random_path(self):
         # Access blockages directly from the workspace
@@ -548,7 +547,7 @@ class Workspace:
         blockages = self.blockages
 
         h = 10 * math.sqrt(2)
-        directions = [ # 8 directions, z-index always 0.
+        directions = [  # 8 directions, z-index always 0.
             (h, h, 0),
             (20, 0, 0),
             (h, -h, 0),
@@ -624,12 +623,14 @@ class Workspace:
             ys.append(point.y)
             zs.append(point.z)
 
-        z_target = pathfinding.collision_detection.check_segment_intersects_blockages(xs, ys, zs, blockages, return_intersection_z_value=True)
+        z_target = pathfinding.collision_detection.check_segment_intersects_blockages(xs, ys, zs, blockages,
+                                                                                      return_intersection_z_value=True)
         baseline_path = []
 
         baseline_path.append(start_node)
         for coordinate in path:
-            new_coordinate = Node(coordinate.x, coordinate.y, z_target + 5) # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+            new_coordinate = Node(coordinate.x, coordinate.y,
+                                  z_target + 5)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
             baseline_path.append(new_coordinate)
 
         baseline_path.append(end_node)
@@ -642,15 +643,16 @@ class Workspace:
 
 
 def check_model():
-    input_array = [[50, 0, 0, # time, wind_speed, wind_angle
-                    100, 100, 0, # postions
-                    4, 0, 0, # velocities
-                    4, 0, 0, #accelerations
-                    500 # payloads
+    input_array = [[50, 0, 0,  # time, wind_speed, wind_angle
+                    100, 100, 0,  # postions
+                    4, 0, 0,  # velocities
+                    4, 0, 0,  # accelerations
+                    500  # payloads
                     ]]
 
     target_labels = ml_model.predict(input_array)
     return target_labels
+
 
 target_labels = check_model()
 print(target_labels)
@@ -658,4 +660,3 @@ print(target_labels)
 pow_res = power(target_labels)
 
 print(pow_res)
-
