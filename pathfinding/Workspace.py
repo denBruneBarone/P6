@@ -1,9 +1,34 @@
+import os
+import pickle
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 
 import numpy as np
+import random
 
+import pathfinding.collision_detection
 from pathfinding import collision_detection
+import heapq
+import math
+from pathfinding.Node import Node
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+# Define the path for saving/loading the model
+MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/trained_model.pkl")
+
+
+def load_model(file_path):
+    with open(file_path, 'rb') as f:
+        model = pickle.load(f)
+    return model
+
+
+# Load the model
+ml_model = load_model(MODEL_FILE_PATH)
+
+
+def power(target_labels):
+    return target_labels[:, 0] * target_labels[:, 1]
 
 
 class Workspace:
@@ -236,19 +261,230 @@ class Workspace:
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
+    def check_segment_intersects_blockage(self, xs, ys, zs, blockage):
+        if zs is not None:
+            # If 3-Dimensional
+            for i in range(len(xs) - 1):
+                if (
+                        (blockage[1][0] <= xs[i] < blockage[1][0] + blockage[0].shape[0] and
+                         blockage[1][1] <= ys[i] < blockage[1][1] + blockage[0].shape[1] and
+                         blockage[1][2] <= zs[i] < blockage[1][2] + blockage[0].shape[2])
+                        or
+                        (blockage[1][0] <= xs[i + 1] < blockage[1][0] + blockage[0].shape[0] and
+                         blockage[1][1] <= ys[i + 1] < blockage[1][1] + blockage[0].shape[1] and
+                         blockage[1][2] <= zs[i + 1] < blockage[1][2] + blockage[0].shape[2])
+                ):
+                    print('Collision in 3D Block found')
+                    return True
+            return False
+        else:
+            # If 2-Dimensional
+            for i in range(len(xs) - 1):
+                # Accessing the first zero'th element of the 1st list. That is (30,30,0) -> 30 (The blockages position)
+                if (
+                        # Checking if a given point collides with the blockage's position(start) and position+size(end)
+                        (blockage[1][0] <= xs[i] < blockage[1][0] + blockage[0].shape[0] and
+                         blockage[1][1] <= ys[i] < blockage[1][1] + blockage[0].shape[1])
+                        or
+                        (blockage[1][0] <= xs[i + 1] < blockage[1][0] + blockage[0].shape[0] and
+                         blockage[1][1] <= ys[i + 1] < blockage[1][1] + blockage[0].shape[1])
+                ):
+                    print('Collision in 2D Block found')
+                    return True
+            return
+        # True: intersection between segment and blockage
+        # False: No intersection between segment and blockage
+
     def find_optimal_path(self, mission):
-        print('find optimal path')
-        # Maybe here call plot_space to show the workspace
-        start = mission.start
-        end = mission.end
+        print('Finding optimal path...')
+        # TODO: Caspar: Maybe here call plot_space to show the workspace
+        start_node = mission.start
+        end_node = mission.end
+        end_node.velocity_x = 0
+        end_node.velocity_y = 0
+        end_node.velocity_z = 0
         payload = mission.payload
-        blockages = self.blockages
+        blockages = []
         wind_field = self.wind_field
 
-        path_example = [(0, 0, 0), (50, 50, 0), (200, 200, 0), (225, 225, 0), (250, 250, 0)]
+        h = 10 * math.sqrt(2)
+        directions = [
+            (h, h, 0), (h, h, 3), (h, h, -3),
+            (20, 0, 0), (20, 0, 3), (20, 0, -3),
+            (h, -h, 0), (h, -h, 3), (h, -h, -3),
 
-        path = path_example
-        return path
+            (0, 20, 0), (0, 20, 3), (0, 20, -3),
+            #(0, 0, 0),
+            (0, 0, 3), (0, 0, -3),
+            (0, -20, 0), (0, -20, 3), (0, -20, -3),
+
+            (-h, h, 0), (-h, h, 3), (-h, h, -3),
+            (-20, 0, 0), (-20, 0, 3), (-20, 0, -3),
+            (-h, -h, 0), (-h, -h, 3), (-h, -h, -3),
+        ]
+        # 4, 6, 8, 10, 12
+        velocities = (10, 12)
+
+        def calculate_time(current_node, next_node):
+            def set_velocity_axis_return_distance(axis, current_node, next_node):
+                current_velocity = current_node.velocity
+                next_velocity = next_node.velocity
+
+                diff_coord = abs(getattr(next_node, axis) - getattr(current_node, axis))
+
+                if current_velocity == 0:
+                    setattr(current_node, 'velocity_' + axis, 0)
+
+                if next_node == end_node:
+                    next_velocity = 0
+
+                if next_velocity == 0:
+                    return diff_coord
+
+                # TODO: Skriv i paper
+                if axis != 'z':
+                    setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity))
+                else:
+                    setattr(next_node, 'velocity_' + axis, diff_coord / (3 / next_velocity))
+
+                return diff_coord
+
+            time_axes = []
+            for axis in ['x', 'y', 'z']:
+                dist = set_velocity_axis_return_distance(axis, current_node, next_node)
+
+                velocity_current_axis = getattr(current_node, 'velocity_' + axis)
+                velocity_next_axis = getattr(next_node, 'velocity_' + axis)
+                t1 = 0
+                t2 = 0
+
+                if axis != 'z':
+                    a = 5
+                else:
+                    a = 1
+
+                if velocity_current_axis == 0 and velocity_next_axis == 0:
+                    pass
+
+                elif velocity_next_axis != 0:
+                    t1 = abs((velocity_next_axis - velocity_current_axis) / a)
+                    if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
+                        t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
+                              / abs(velocity_next_axis))
+
+                else:
+                    t1 = abs((velocity_next_axis - velocity_current_axis) / a)
+                    if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
+                        t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
+                              / abs(velocity_current_axis))
+                time = t1 + t2
+                time_axes.append(time)
+
+            max_time = max(time_axes)
+            if max_time == 0:
+                print('time is 0')
+            return max_time
+
+        def get_neighbors(node):
+            neighbors = []
+
+            # if next to goal
+            if distance_h(end_node, node) <= 20 and distance_v(end_node, node) <= 3:
+                end_node.velocity = 0
+                end_node.velocity_x = 0
+                end_node.velocity_y = 0
+                end_node.velocity_z = 0
+                neighbors.append(end_node)
+
+            else:
+                for dist_x, dist_y, dist_z in directions:
+                    new_x = node.x + dist_x
+                    new_y = node.y + dist_y
+                    new_z = node.z + dist_z
+                    new_node = Node(new_x, new_y, new_z)
+                    if new_node not in blockages:
+                        neighbors.append(new_node)
+            return neighbors
+
+        # TODO: Rune og Lucas: dist_x + dist_y <= 20, dist_z <= 3  --- se paper side 8 afsnit b
+        def distance_h(node1, node2):
+            dist_x = (node1.x - node2.x) ** 2
+            dist_y = (node1.y - node2.y) ** 2
+            return math.sqrt(dist_x + dist_y)
+
+        def distance_v(node1, node2):
+            return abs(node1.z - node2.z)
+
+        def heuristic_power(current_node, next_node):
+            time = calculate_time(current_node, next_node)
+            wind_speed = 0
+            wind_angle = 0
+
+            if current_node == end_node:
+                # raise Exception("current is end")
+                return 0
+            linear_acceleration_x = next_node.velocity_x / time
+            linear_acceleration_y = next_node.velocity_y / time
+            linear_acceleration_z = next_node.velocity_z / time
+
+            input_array = [[time, wind_speed, wind_angle,
+                            next_node.x-current_node.x, next_node.y-current_node.y, next_node.z-current_node.z,
+                            next_node.velocity_x, next_node.velocity_y, next_node.velocity_z,
+                            linear_acceleration_x, linear_acceleration_y, linear_acceleration_z,
+                            payload]]
+
+            target_labels = ml_model.predict(input_array)
+
+            power_watt = power(target_labels)
+
+            power_joule = power_watt * time
+
+            return power_joule
+
+        pq = [(0, start_node)]
+
+        visited = {start_node: 0}
+        predecessor = {}
+
+        while pq:
+            _, current = heapq.heappop(pq)
+
+            if current == end_node:
+                break
+
+            for neighbor in get_neighbors(current):
+                # Calculate the energy for the neighbor using the heuristic function
+                for velocity in velocities:
+                    neighbor.velocity = velocity
+                    c_cost = visited[current]  # Actual cost to reach the current node
+                    n_cost = heuristic_power(current,
+                                             neighbor)  # Estimated cost to reach the goal from the current node
+                    t_cost = c_cost + n_cost  # Total cost
+
+                    if neighbor not in visited or t_cost < visited[neighbor]:
+                        visited[neighbor] = t_cost
+                        predecessor[neighbor] = current
+                        e_cost = heuristic_power(neighbor, end_node)
+                        a_cost = t_cost + e_cost
+                        print(f"t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}")
+
+                        heapq.heappush(pq, (a_cost , neighbor))  # Use the f cost as the priority
+
+        path = []
+        current = end_node
+        while current != start_node:
+            path.append(current)
+            current = predecessor[current]
+        path.append(start_node)
+        path.reverse()
+
+        # Convert path nodes to coordinates
+        path_coordinates = [(node.x, node.y, node.z) for node in path]
+
+        print(path_coordinates)
+
+        return path_coordinates
+
 
     def generate_random_path(self):
         # Access blockages directly from the workspace
@@ -305,3 +541,121 @@ class Workspace:
                     path.append((x, y, 0))
 
         return path
+
+    def find_baseline_path(self, mission):
+        start_node = mission.start
+        end_node = mission.end
+        blockages = self.blockages
+
+        h = 10 * math.sqrt(2)
+        directions = [ # 8 directions, z-index always 0.
+            (h, h, 0),
+            (20, 0, 0),
+            (h, -h, 0),
+
+            (0, 20, 0),
+
+            (0, -20, 0),
+
+            (-h, h, 0),
+            (-20, 0, 0),
+            (-h, -h, 0),
+        ]
+
+        def distance(node1, node2):
+            dist_x = (node1.x - node2.x) ** 2
+            dist_y = (node1.y - node2.y) ** 2
+            return math.sqrt(dist_x + dist_y)
+
+        def heuristic_distance(node):
+            return distance(node, end_node)
+
+        def get_neighbors(node):
+            neighbors = []
+
+            # if next to goal
+            if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20:
+                neighbors.append(end_node)
+
+            else:
+                for dist_x, dist_y, dist_z in directions:
+                    new_x = node.x + dist_x
+                    new_y = node.y + dist_y
+                    new_z = node.z + dist_z
+                    new_node = Node(new_x, new_y, new_z)
+                    neighbors.append(new_node)
+            return neighbors
+
+        pq = [(0, start_node)]
+
+        visited = {start_node: 0}
+        predecessor = {}
+
+        while pq:
+            _, current = heapq.heappop(pq)
+
+            if current == end_node:
+                break
+
+            for neighbor in get_neighbors(current):
+                # Calculate tentative distance through current node
+                tentative_distance = visited[current] + distance(current, neighbor)
+
+                # If the tentative distance is less than the recorded distance to the neighbor, update it
+                if neighbor not in visited or tentative_distance < visited[neighbor]:
+                    visited[neighbor] = tentative_distance
+                    heapq.heappush(pq, (tentative_distance + heuristic_distance(neighbor), neighbor))
+                    predecessor[neighbor] = current
+
+                # Reconstruct the path
+        path = []
+        current = end_node
+        while current in predecessor:
+            path.insert(0, current)
+            current = predecessor[current]
+        path.insert(0, start_node)
+
+        xs = []
+        ys = []
+        zs = []
+
+        for point in path:
+            xs.append(point.x)
+            ys.append(point.y)
+            zs.append(point.z)
+
+        z_target = pathfinding.collision_detection.check_segment_intersects_blockages(xs, ys, zs, blockages, return_intersection_z_value=True)
+        baseline_path = []
+
+        baseline_path.append(start_node)
+        for coordinate in path:
+            new_coordinate = Node(coordinate.x, coordinate.y, z_target + 5) # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+            baseline_path.append(new_coordinate)
+
+        baseline_path.append(end_node)
+
+        path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
+
+        print(path_coordinates)
+
+        return path_coordinates
+
+
+def check_model():
+    input_array = [[50, 0, 0, # time, wind_speed, wind_angle
+                    100, 100, 0, # postions
+                    4, 0, 0, # velocities
+                    4, 0, 0, #accelerations
+                    500 # payloads
+                    ]]
+
+    target_labels = ml_model.predict(input_array)
+    return target_labels
+
+target_labels = check_model()
+print(target_labels)
+
+pow_res = power(target_labels)
+
+print(pow_res)
+
