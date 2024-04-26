@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 
 import numpy as np
-import random
 
 import pathfinding.collision_detection
 from pathfinding import collision_detection
@@ -595,28 +594,23 @@ class Workspace:
             ys.append(point.y)
             zs.append(point.z)
 
-        # TODO: Dette skal laves om: Dronen kan flyve ud af workspace. Og det fungerer ikke at collision_detection
-        #  skifter mellem at returnere en bool eller et tal(koordinat)
-        z_target = pathfinding.collision_detection.check_segment_intersects_blockages(xs, ys, zs, blockages,
-                                                                                      return_intersection_z_value=True)
-        if z_target == float('-inf'):
-            z_target = 0
-
+        z_target = pathfinding.collision_detection.find_max_intersection_z(xs, ys, zs, blockages)
         baseline_path = []
+        clearance_height = 5
 
-        baseline_path.append(start_node)
-        for coordinate in path:
-            new_coordinate = Node(coordinate.x, coordinate.y,
-                                  z_target + 5)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
-            baseline_path.append(new_coordinate)
+        if z_target + clearance_height <= self.max_bounds[2]:
+            baseline_path.append(start_node)
+            for coordinate in path:
+                new_coordinate = Node(coordinate.x, coordinate.y,
+                                      z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+                baseline_path.append(new_coordinate)
 
-        baseline_path.append(end_node)
-
-        path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
-
-        print(path_coordinates)
-
-        return path_coordinates
+            baseline_path.append(end_node)
+            path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
+            print(path_coordinates)
+            return path_coordinates
+        else:
+            raise NotImplementedError('The baseline path is too high for the workspace')
 
 
 def check_model():
@@ -633,7 +627,5 @@ def check_model():
 
 target_labels = check_model()
 print(target_labels)
-
 pow_res = power(target_labels)
-
 print(pow_res)
