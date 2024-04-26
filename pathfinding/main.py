@@ -22,15 +22,16 @@ def setup_workspace():
     space.add_blockage(blockage_matrix_2, position_2)
 
     # Add Windfield
-    space.add_wind_field(45, 10)
+    # space.add_wind_field(45, 10)
 
     return space
 
 
 def find_and_show_optimal_path():
     workspace = setup_workspace()
-    mission = Mission(Node(0, 0, 0), Node(110, 250, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(325, 325, 0), 500)
     flight_path = workspace.find_optimal_path(mission)
+    # flight_path = workspace.find_baseline_path(mission)
 
     # flight_path = [(0, 0, 0),
     #                (250, 250, 30),  # 1
@@ -49,7 +50,7 @@ def find_and_show_optimal_path():
     workspace.add_flight_path(flight_path=flight_path)
 
     # Options: 2D or 3D
-    workspace.plot_space(dimension='2D', dpi=800, show_wind=True)
+    workspace.plot_space(dimension='2D', dpi=800, show_wind=False)
     workspace.plot_space(dimension='3D', dpi=800)
 
 
