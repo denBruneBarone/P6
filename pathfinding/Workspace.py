@@ -261,51 +261,16 @@ class Workspace:
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
-    def check_segment_intersects_blockage(self, xs, ys, zs, blockage):
-        if zs is not None:
-            # If 3-Dimensional
-            for i in range(len(xs) - 1):
-                if (
-                        (blockage[1][0] <= xs[i] < blockage[1][0] + blockage[0].shape[0] and
-                         blockage[1][1] <= ys[i] < blockage[1][1] + blockage[0].shape[1] and
-                         blockage[1][2] <= zs[i] < blockage[1][2] + blockage[0].shape[2])
-                        or
-                        (blockage[1][0] <= xs[i + 1] < blockage[1][0] + blockage[0].shape[0] and
-                         blockage[1][1] <= ys[i + 1] < blockage[1][1] + blockage[0].shape[1] and
-                         blockage[1][2] <= zs[i + 1] < blockage[1][2] + blockage[0].shape[2])
-                ):
-                    print('Collision in 3D Block found')
-                    return True
-            return False
-        else:
-            # If 2-Dimensional
-            for i in range(len(xs) - 1):
-                # Accessing the first zero'th element of the 1st list. That is (30,30,0) -> 30 (The blockages position)
-                if (
-                        # Checking if a given point collides with the blockage's position(start) and position+size(end)
-                        (blockage[1][0] <= xs[i] < blockage[1][0] + blockage[0].shape[0] and
-                         blockage[1][1] <= ys[i] < blockage[1][1] + blockage[0].shape[1])
-                        or
-                        (blockage[1][0] <= xs[i + 1] < blockage[1][0] + blockage[0].shape[0] and
-                         blockage[1][1] <= ys[i + 1] < blockage[1][1] + blockage[0].shape[1])
-                ):
-                    print('Collision in 2D Block found')
-                    return True
-            return
-        # True: intersection between segment and blockage
-        # False: No intersection between segment and blockage
-
     def find_optimal_path(self, mission):
         print('Finding optimal path...')
-        # TODO: Caspar: Maybe here call plot_space to show the workspace
         start_node = mission.start
         end_node = mission.end
         end_node.velocity_x = 0
         end_node.velocity_y = 0
         end_node.velocity_z = 0
         payload = mission.payload
-        blockages = []
-        wind_field = self.wind_field
+        # blockages = []
+        # wind_field = self.wind_field
 
         h = 10 * math.sqrt(2)
         directions = [
@@ -389,7 +354,9 @@ class Workspace:
             neighbors = []
 
             # if next to goal
-            if distance_h(end_node, node) <= 20 and distance_v(end_node, node) <= 3 and end_node not in blockages:
+            if distance_h(end_node, node) <= 20 and distance_v(end_node,
+                                                               node) <= 3 and collision_detection.check_segment_intersects_blockages(
+                [node.x, end_node.x], [node.y, end_node.y], [node.z, end_node.z], self.blockages) is False:
                 end_node.velocity = 0
                 end_node.velocity_x = 0
                 end_node.velocity_y = 0
@@ -402,7 +369,9 @@ class Workspace:
                     new_y = node.y + dist_y
                     new_z = node.z + dist_z
                     new_node = Node(new_x, new_y, new_z)
-                    if new_node not in blockages and new_node.z >= 0:
+                    if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
+                                                                              [node.z, new_z],
+                                                                              self.blockages) is False:
                         neighbors.append(new_node)
             return neighbors
 
@@ -440,7 +409,7 @@ class Workspace:
 
             return power_joule
 
-        pq = [(0, start_node)]
+        pq = [(0, start_node)]  # Priority queue
 
         visited = {start_node: 0}
         predecessor = {}
@@ -451,24 +420,27 @@ class Workspace:
             if current == end_node:
                 break
 
-            for neighbor in get_neighbors(current):
-                # Calculate the energy for the neighbor using the heuristic function
-                for velocity in velocities:
-                    neighbor.velocity = velocity
-                    c_cost = visited[current]  # Actual cost to reach the current node
-                    n_cost = heuristic_power(current,
-                                             neighbor)  # Estimated cost to reach the goal from the current node
-                    t_cost = c_cost + n_cost  # Total cost
+            try:
+                for neighbor in get_neighbors(current):
+                    # Calculate the energy for the neighbor using the heuristic function
+                    for velocity in velocities:
+                        neighbor.velocity = velocity
+                        c_cost = visited[current]  # Actual cost to reach the current node
+                        n_cost = heuristic_power(current,
+                                                 neighbor)  # Estimated cost to reach the goal from the current node
+                        t_cost = c_cost + n_cost  # Total cost
 
-                    if neighbor not in visited or t_cost < visited[neighbor]:
-                        visited[neighbor] = t_cost
-                        predecessor[neighbor] = current
-                        e_cost = heuristic_power(neighbor, end_node)
-                        punish = 0
-                        a_cost = t_cost + e_cost + punish
-                        print(f"t_cost: {t_cost}, e_cost: {e_cost}, punish: {punish}, x: {neighbor.x}, y: {neighbor.y}, z_ {neighbor.z}, a_cost: {a_cost}")
+                        if neighbor not in visited or t_cost < visited[neighbor]:
+                            visited[neighbor] = t_cost
+                            predecessor[neighbor] = current
+                            e_cost = heuristic_power(neighbor, end_node)
+                            punish = 0
+                            a_cost = t_cost + e_cost + punish
+                            print(f"t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}")
 
-                        heapq.heappush(pq, (a_cost, neighbor))  # Use the f cost as the priority
+                            heapq.heappush(pq, (a_cost, neighbor))  # Use the f cost as the priority
+            except Exception as e:
+                print(f'An error ocurred {e}')
 
         path = []
         current = end_node
@@ -623,23 +595,23 @@ class Workspace:
             ys.append(point.y)
             zs.append(point.z)
 
-        z_target = pathfinding.collision_detection.check_segment_intersects_blockages(xs, ys, zs, blockages,
-                                                                                      return_intersection_z_value=True)
+        z_target = pathfinding.collision_detection.find_max_intersection_z(xs, ys, zs, blockages)
         baseline_path = []
+        clearance_height = 5
 
-        baseline_path.append(start_node)
-        for coordinate in path:
-            new_coordinate = Node(coordinate.x, coordinate.y,
-                                  z_target + 5)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
-            baseline_path.append(new_coordinate)
+        if z_target + clearance_height <= self.max_bounds[2]:
+            baseline_path.append(start_node)
+            for coordinate in path:
+                new_coordinate = Node(coordinate.x, coordinate.y,
+                                      z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+                baseline_path.append(new_coordinate)
 
-        baseline_path.append(end_node)
-
-        path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
-
-        print(path_coordinates)
-
-        return path_coordinates
+            baseline_path.append(end_node)
+            path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
+            print(path_coordinates)
+            return path_coordinates
+        else:
+            raise NotImplementedError('The baseline path is too high for the workspace')
 
 
 def check_model():
