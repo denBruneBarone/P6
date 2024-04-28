@@ -389,7 +389,7 @@ class Workspace:
             neighbors = []
 
             # if next to goal
-            if distance_h(end_node, node) <= 20 and distance_v(end_node, node) <= 3:
+            if distance_h(end_node, node) <= 20 and distance_v(end_node, node) <= 3 and end_node not in blockages:
                 end_node.velocity = 0
                 end_node.velocity_x = 0
                 end_node.velocity_y = 0
@@ -402,11 +402,10 @@ class Workspace:
                     new_y = node.y + dist_y
                     new_z = node.z + dist_z
                     new_node = Node(new_x, new_y, new_z)
-                    if new_node not in blockages:
+                    if new_node not in blockages and new_node.z >= 0:
                         neighbors.append(new_node)
             return neighbors
 
-        # TODO: Rune og Lucas: dist_x + dist_y <= 20, dist_z <= 3  --- se paper side 8 afsnit b
         def distance_h(node1, node2):
             dist_x = (node1.x - node2.x) ** 2
             dist_y = (node1.y - node2.y) ** 2
@@ -465,8 +464,9 @@ class Workspace:
                         visited[neighbor] = t_cost
                         predecessor[neighbor] = current
                         e_cost = heuristic_power(neighbor, end_node)
-                        a_cost = t_cost + e_cost
-                        print(f"t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}")
+                        punish = 0
+                        a_cost = t_cost + e_cost + punish
+                        print(f"t_cost: {t_cost}, e_cost: {e_cost}, punish: {punish}, x: {neighbor.x}, y: {neighbor.y}, z_ {neighbor.z}, a_cost: {a_cost}")
 
                         heapq.heappush(pq, (a_cost, neighbor))  # Use the f cost as the priority
 
