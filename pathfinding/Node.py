@@ -25,3 +25,7 @@ class Node:
 
     def __hash__(self):
         return hash((self.x, self.y, self.z, self.velocity))
+
+    def __str__(self):
+        return f"Node(x={self.x}, y={self.y}, z={self.z}, velocity={self.velocity}, " \
+               f"velocity_x={self.velocity_x}, velocity_y={self.velocity_y}, velocity_z={self.velocity_z})"
