@@ -578,10 +578,6 @@ class Workspace:
                     n_cost = self.heuristic_power(current,
                                                   neighbor, mission)  # Estimated cost to reach the goal from the current node
                     t_cost = c_cost + n_cost  # Total cost
-                    tentative_cost = visited[current] + distance(current, neighbor) + self.heuristic_power(current,
-                                                                                                           neighbor,
-                                                                                                           mission)
-
 
                     # If the tentative cost is less than the recorded cost to the neighbor, update it
                     if neighbor not in visited or t_cost < visited[neighbor]:
