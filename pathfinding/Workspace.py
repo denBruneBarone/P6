@@ -261,10 +261,11 @@ class Workspace:
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
-    def calculate_time(current_node, next_node):
+    def calculate_time(self, current_node, next_node, mission):
         def set_velocity_axis_return_distance(axis, current_node, next_node):
             current_velocity = current_node.velocity
             next_velocity = next_node.velocity
+            end_node = mission.end
 
         diff_coord = abs(getattr(next_node, axis) - getattr(current_node, axis))
 
