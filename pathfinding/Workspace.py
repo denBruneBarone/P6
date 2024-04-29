@@ -2,10 +2,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
-
 import numpy as np
-import random
-
 import pathfinding.collision_detection
 from pathfinding import collision_detection
 import heapq
@@ -267,90 +264,60 @@ class Workspace:
             next_velocity = next_node.velocity
             end_node = mission.end
 
-        diff_coord = abs(getattr(next_node, axis) - getattr(current_node, axis))
+            diff_coord = abs(getattr(next_node, axis) - getattr(current_node, axis))
 
-        if current_velocity == 0:
-            setattr(current_node, 'velocity_' + axis, 0)
+            if current_velocity == 0:
+                setattr(current_node, 'velocity_' + axis, 0)
 
-        if next_node == end_node:
-            next_velocity = 0
+            if next_node == end_node:
+                next_velocity = 0
 
-        if next_velocity == 0:
+            if next_velocity == 0:
+                return diff_coord
+
+            # TODO: Skriv i paper
+            if axis != 'z':
+                setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity))
+            else:
+                setattr(next_node, 'velocity_' + axis, diff_coord / (3 / next_velocity))
+
             return diff_coord
 
-        # TODO: Skriv i paper
-        if axis != 'z':
-            setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity))
-        else:
-            setattr(next_node, 'velocity_' + axis, diff_coord / (3 / next_velocity))
+        time_axes = []
+        for axis in ['x', 'y', 'z']:
+            dist = set_velocity_axis_return_distance(axis, current_node, next_node)
 
-        return diff_coord
+            velocity_current_axis = getattr(current_node, 'velocity_' + axis)
+            velocity_next_axis = getattr(next_node, 'velocity_' + axis)
+            t1 = 0
+            t2 = 0
 
-    time_axes = []
-    for axis in ['x', 'y', 'z']:
-        dist = set_velocity_axis_return_distance(axis, current_node, next_node)
+            if axis != 'z':
+                a = 5
+            else:
+                a = 1
 
-        velocity_current_axis = getattr(current_node, 'velocity_' + axis)
-        velocity_next_axis = getattr(next_node, 'velocity_' + axis)
-        t1 = 0
-        t2 = 0
+            if velocity_current_axis == 0 and velocity_next_axis == 0:
+                pass
 
-        if axis != 'z':
-            a = 5
-        else:
-            a = 1
+            elif velocity_next_axis != 0:
+                t1 = abs((velocity_next_axis - velocity_current_axis) / a)
+                if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
+                    t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
+                          / abs(velocity_next_axis))
 
-        if velocity_current_axis == 0 and velocity_next_axis == 0:
-            pass
+            else:
+                t1 = abs((velocity_next_axis - velocity_current_axis) / a)
+                if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
+                    t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
+                          / abs(velocity_current_axis))
+            time = t1 + t2
+            time_axes.append(time)
 
-        elif velocity_next_axis != 0:
-            t1 = abs((velocity_next_axis - velocity_current_axis) / a)
-            if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
-                t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
-                      / abs(velocity_next_axis))
-
-        else:
-            t1 = abs((velocity_next_axis - velocity_current_axis) / a)
-            if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
-                t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
-                      / abs(velocity_current_axis))
-        time = t1 + t2
-        time_axes.append(time)
-
-    max_time = max(time_axes)
-    if max_time == 0:
-        print('time is 0')
-    return max_time
-
-    def find_optimal_path(self, mission):
-        print('Finding optimal path...')
-        # TODO: Caspar: Maybe here call plot_space to show the workspace
-        start_node = mission.start
-        end_node = mission.end
-        end_node.velocity_x = 0
-        end_node.velocity_y = 0
-        end_node.velocity_z = 0
-        payload = mission.payload
-        blockages = []
-        wind_field = self.wind_field
-
-        h = 10 * math.sqrt(2)
-        directions = [
-            (h, h, 0), (h, h, 3), (h, h, -3),
-            (20, 0, 0), (20, 0, 3), (20, 0, -3),
-            (h, -h, 0), (h, -h, 3), (h, -h, -3),
-
-            (0, 20, 0), (0, 20, 3), (0, 20, -3),
-            #(0, 0, 0),
-            (0, 0, 3), (0, 0, -3),
-            (0, -20, 0), (0, -20, 3), (0, -20, -3),
-
-            (-h, h, 0), (-h, h, 3), (-h, h, -3),
-            (-20, 0, 0), (-20, 0, 3), (-20, 0, -3),
-            (-h, -h, 0), (-h, -h, 3), (-h, -h, -3),
-        ]
-        # 4, 6, 8, 10, 12
-        velocities = (10, 12)
+        max_time = max(time_axes)
+        if max_time == 0:
+            print('time is 0')
+        return max_time
 
     def heuristic_power(self, current_node, next_node, mission):
         time = self.calculate_time(current_node, next_node, mission)
