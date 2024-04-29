@@ -32,7 +32,7 @@ def power(target_labels):
 
 
 class Workspace:
-    def __init__(self, dimensions, max_bounds):
+    def __init__(self, dimensions, max_bounds, mission):
         self.dimensions = dimensions
         self.max_bounds = max_bounds
         self.flight_paths = []
@@ -41,6 +41,7 @@ class Workspace:
         self.wind_angle_rad = 0
         self.wind_angle = 0
         self.grid_size = 100
+        self.mission = mission
 
     def add_wind_field(self, angle, wind_speed):
         # Convert wind angle to radians
@@ -261,14 +262,14 @@ class Workspace:
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
-    def find_optimal_path(self, mission):
+    def find_optimal_path(self):
         print('Finding optimal path...')
-        start_node = mission.start
-        end_node = mission.end
+        start_node = self.mission.start
+        end_node = self.mission.end
         end_node.velocity_x = 0
         end_node.velocity_y = 0
         end_node.velocity_z = 0
-        payload = mission.payload
+        payload = self.mission.payload
         # blockages = []
         # wind_field = self.wind_field
 
@@ -513,9 +514,9 @@ class Workspace:
 
         return path
 
-    def find_baseline_path(self, mission):
-        start_node = mission.start
-        end_node = mission.end
+    def find_baseline_path(self):
+        start_node = self.mission.start
+        end_node = self.mission.end
         blockages = self.blockages
 
         h = 10 * math.sqrt(2)

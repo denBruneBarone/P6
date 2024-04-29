@@ -41,19 +41,21 @@ def check_segment_intersects_blockages(xs, ys, zs, blockages):
         zs = [zs]
 
     for blockage in blockages:
-        # Extract blockage properties
-        block_position = blockage[1]
-        block_size_x, block_size_y, block_size_z = blockage[0].shape
 
-        for i in range(len(xs) - 1):
-            # Accessing coordinates of the line segment
-            start = np.array([xs[i], ys[i], zs[i]])
-            end = np.array([xs[i + 1], ys[i + 1], zs[i + 1]])
+        if np.all(blockage == 1):
+            # Extract blockage properties
+            block_position = blockage[1]
+            block_size_x, block_size_y, block_size_z = blockage[0].shape
 
-            # Check if the segment intersects with the blockage using ray tracing
-            intersect = ray_intersects_blockage(start, end, block_position, (block_size_x, block_size_y, block_size_z))
-            if intersect:
-                return True
+            for i in range(len(xs) - 1):
+                # Accessing coordinates of the line segment
+                start = np.array([xs[i], ys[i], zs[i]])
+                end = np.array([xs[i + 1], ys[i + 1], zs[i + 1]])
+
+                # Check if the segment intersects with the blockage using ray tracing
+                intersect = ray_intersects_blockage(start, end, block_position, (block_size_x, block_size_y, block_size_z))
+                if intersect:
+                    return True
 
     return False
 
