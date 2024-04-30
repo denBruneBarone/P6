@@ -11,6 +11,7 @@ from pathfinding import collision_detection
 import heapq
 import math
 from pathfinding.Node import Node
+from Blockage import Blockage
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 # Define the path for saving/loading the model
@@ -134,15 +135,27 @@ class Workspace:
 
         return rotated_wind_speed_grid
 
-    def add_blockage(self, blockage_matrix, position):
-        if len(blockage_matrix.shape) != self.dimensions:
+    def add_blockage(self, blockage):
+        # if len(blockage_matrix.shape) != self.dimensions:
+        #     raise ValueError(f"Blockage matrix dimensions must match the space dimensions")
+        # for i in range(self.dimensions):
+        #     if not (0 <= position[i] <= self.max_bounds[i]):
+        #         raise ValueError(f"Blockage position must be within the specified bounds")
+        #     if position[i] + blockage_matrix.shape[i] > self.max_bounds[i]:
+        #         raise ValueError(f"Blockage does not fit within the space dimensions")
+        # self.blockages.append((blockage_matrix, position))
+
+        # if len(blockage_matrix.shape) != self.dimensions:
+        #     raise ValueError(f"Blockage matrix dimensions must match the space dimensions")
+
+        if len(blockage.np_array.shape) != self.dimensions:
             raise ValueError(f"Blockage matrix dimensions must match the space dimensions")
         for i in range(self.dimensions):
-            if not (0 <= position[i] <= self.max_bounds[i]):
+            if not (0 <= blockage.positions[i] <= self.max_bounds[i]):
                 raise ValueError(f"Blockage position must be within the specified bounds")
-            if position[i] + blockage_matrix.shape[i] > self.max_bounds[i]:
+            if blockage.positions[i] + blockage.np_array.shape[i] > self.max_bounds[i]:
                 raise ValueError(f"Blockage does not fit within the space dimensions")
-        self.blockages.append((blockage_matrix, position))
+        self.blockages.append((blockage))
 
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)

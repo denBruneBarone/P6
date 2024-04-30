@@ -1,6 +1,7 @@
 from pathfinding.Mission import Mission
 from pathfinding.Workspace import Workspace
 from pathfinding.Node import Node
+from pathfinding.Blockage import Blockage
 import numpy as np
 
 
