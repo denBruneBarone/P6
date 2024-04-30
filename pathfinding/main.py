@@ -2,6 +2,7 @@ from pathfinding.Mission import Mission
 from pathfinding.Workspace import Workspace
 from pathfinding.Node import Node
 import numpy as np
+import time
 
 
 def setup_workspace():
@@ -29,8 +30,14 @@ def setup_workspace():
 
 def find_and_show_optimal_path():
     workspace = setup_workspace()
-    mission = Mission(Node(0, 0, 0), Node(200, 200, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(100, 100, 0), 500)
+
+    start_time = time.time()
     flight_optimal = workspace.find_optimal_path(mission)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("time for optimal path: ", elapsed_time)
+
     flight_baseline = workspace.find_baseline_path(mission)
 
     energy_diff = flight_optimal.energy / flight_baseline.energy * 100
