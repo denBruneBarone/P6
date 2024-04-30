@@ -519,6 +519,11 @@ class Workspace:
         end_node = self.mission.end
         blockages = self.blockages
 
+        if start_node.x < 0 or start_node.x > self.max_bounds[0] or end_node.x < 0 or end_node.x > self.max_bounds[0]:
+            raise ValueError("The start and end nodes must be within the workspace bounds")
+        if start_node.y < 0 or start_node.y > self.max_bounds[1] or end_node.y < 0 or end_node.y > self.max_bounds[1]:
+            raise ValueError("The start and end nodes must be within the workspace bounds")
+
         h = 10 * math.sqrt(2)
         directions = [  # 8 directions, z-index always 0.
             (h, h, 0),

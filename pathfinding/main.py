@@ -14,7 +14,7 @@ def setup_workspace(mission):
     min_height = 30
     no_fly_zone_blockage = np.ones((400, 400, min_height))
     no_fly_zone_position = [0, 0, 0]
-    #space.add_blockage(no_fly_zone_blockage, no_fly_zone_position)
+    # space.add_blockage(no_fly_zone_blockage, no_fly_zone_position)
 
     # Add a blockage (building) represented as a matrix
     blockage_matrix_1 = np.ones((40, 80, 30))  # Define a 2x2x3 blockage matrix
@@ -44,48 +44,47 @@ def setup_workspace(mission):
 
     z = 0
 
-    if x_1 <= x_2 and y_1 <= y_2:
+    # Calculate start and end points
+    if x_1 <= x_2:
         x_start = max(0, x_1 - clear_distance / 2)
-        y_start = max(0, y_1 - clear_distance / 2)
         x_end = min(x_2, x_2 - clear_distance / 2)
-        y_end = min(y_2, y_2 - clear_distance / 2)
-
-        while x_end + clear_distance > max_bounds[0]:
-            x_end -= 1
-        while y_end + clear_distance > max_bounds[1]:
-            y_end -= 1
-    elif x_1 >= x_2 and y_1 >= y_2:
+    else:
         x_start = min(x_1, x_1 - clear_distance / 2)
-        y_start = min(y_1, y_1 - clear_distance / 2)
         x_end = max(0, x_2 - clear_distance / 2)
+
+    if y_1 <= y_2:
+        y_start = max(0, y_1 - clear_distance / 2)
+        y_end = min(y_2, y_2 - clear_distance / 2)
+    else:
+        y_start = min(y_1, y_1 - clear_distance / 2)
         y_end = max(0, y_2 - clear_distance / 2)
 
-        while x_start + clear_distance > max_bounds[0]:
-            x_start -= 1
-        while y_start + clear_distance > max_bounds[1]:
-            y_start -= 1
-    elif x_1 >= x_2 and y_1 <= y_2:
-        x_start = min(x_1, x_1 - clear_distance / 2)
-        y_start = max(0, y_1 - clear_distance / 2)
-        x_end = max(0, x_2 - clear_distance / 2)
-        y_end = min(y_2, y_2 - clear_distance / 2)
+    # Check if any of the values are invalid
+    if x_start is None or x_end is None or y_start is None or y_end is None:
+        raise ValueError("Invalid start and end points")
 
-        while x_start + clear_distance > max_bounds[0]:
-            x_start -= 1
-        while y_end + clear_distance > max_bounds[1]:
-            y_end -= 1
-    elif x_1 <= x_2 and y_1 >= y_2:
-        x_start = max(0, x_1 - clear_distance / 2)
-        y_start = min(y_1, y_1 - clear_distance / 2)
-        x_end = min(x_2, x_2 - clear_distance / 2)
-        y_end = max(0, y_2 - clear_distance / 2)
+    # Adjust points if they are out of bounds
+    x_start = max(0, x_start)
+    y_start = max(0, y_start)
+    x_end = max(0, x_end)
+    y_end = max(0, y_end)
 
-        while x_end + clear_distance > max_bounds[0]:
-            x_end -= 1
-        while y_start + clear_distance > max_bounds[1]:
-            y_start -= 1
+    # Check if adjusted values are still out of bounds and adjust them if necessary
+    while x_end + clear_distance > max_bounds[0] and x_end >= 0:
+        x_end -= 1
 
+    while x_start + clear_distance > max_bounds[0] and x_start >= 0:
+        x_start -= 1
 
+    while y_end + clear_distance > max_bounds[1] and y_end >= 0:
+        y_end -= 1
+
+    while y_start + clear_distance > max_bounds[1] and y_start >= 0:
+        y_start -= 1
+
+    # Check if any of the values are still out of bounds after adjustments
+    if x_start < 0 or x_end < 0 or y_start < 0 or y_end < 0:
+        raise ValueError("Adjusted start and end points are out of bounds")
 
     takeoff_area_position = [x_start, y_start, z]
     space.add_blockage(takeoff_area, takeoff_area_position)
@@ -97,7 +96,7 @@ def setup_workspace(mission):
 
 
 def find_and_show_optimal_path():
-    mission = Mission(Node(0, 0, 0), Node(400, 400, 0), 500)
+    mission = Mission(Node(300, 100, 0), Node(100, 300, 0), 500)
 
     workspace = setup_workspace(mission)
     # flight_path = workspace.find_optimal_path()
@@ -107,7 +106,7 @@ def find_and_show_optimal_path():
 
     # Options: 2D or 3D
     workspace.plot_space(dimension='2D', dpi=800, show_wind=False)
-    # workspace.plot_space(dimension='3D', dpi=800)
+    workspace.plot_space(dimension='3D', dpi=800)
 
 
 if __name__ == '__main__':
