@@ -86,7 +86,7 @@ def find_max_intersection_z(xs, ys, zs, blockages):
     """
     Find the maximum z-coordinate intersection point between a line segment and any blockage in 3D space.
     """
-    max_z_intersection = float("-inf")
+    max_z_intersection = 0
 
     # Check if xs, ys, zs are arrays or integers
     if isinstance(xs, (int, float)):

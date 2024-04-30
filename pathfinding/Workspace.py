@@ -8,6 +8,7 @@ from pathfinding import collision_detection
 import heapq
 import math
 from pathfinding.Node import Node
+from pathfinding.EnergyPath import EnergyPath
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 # Define the path for saving/loading the model
@@ -277,7 +278,7 @@ class Workspace:
 
             # TODO: Skriv i paper
             if axis != 'z':
-                setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity))
+                setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity)) #TODO: check paper
             else:
                 setattr(next_node, 'velocity_' + axis, diff_coord / (3 / next_velocity))
 
@@ -285,12 +286,13 @@ class Workspace:
 
         time_axes = []
         for axis in ['x', 'y', 'z']:
+            # check om er 20 m og 3 m væk. hvis ja, kald denne. ellers exception
             dist = set_velocity_axis_return_distance(axis, current_node, next_node)
 
             velocity_current_axis = getattr(current_node, 'velocity_' + axis)
             velocity_next_axis = getattr(next_node, 'velocity_' + axis)
-            t1 = 0
-            t2 = 0
+            t1 = 0 # time of acceleration
+            t2 = 0 # time of constant velocity
 
             if axis != 'z':
                 a = 5
@@ -312,6 +314,9 @@ class Workspace:
                     t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
                           / abs(velocity_current_axis))
             time = t1 + t2
+
+            if time < 0:
+                raise ValueError("Time less than zero!")
             time_axes.append(time)
 
         max_time = max(time_axes)
@@ -324,7 +329,10 @@ class Workspace:
         wind_speed = 0  # Assuming you'll update this logic accordingly
         wind_angle = 0  # Assuming you'll update this logic accordingly
 
-        if current_node == mission.end:
+        if time == 0:
+            pass
+
+        if current_node.x == mission.end.x:
             return 0  # Assuming you want to return 0 for the end node
         linear_acceleration_x = next_node.velocity_x / time
         linear_acceleration_y = next_node.velocity_y / time
@@ -395,7 +403,7 @@ class Workspace:
                     new_node = Node(new_x, new_y, new_z)
                     if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                               [node.z, new_z],
-                                                                              self.blockages) is False:
+                                                                              self.blockages) is False and new_z >= 0:
                         neighbors.append(new_node)
             return neighbors
 
@@ -435,7 +443,7 @@ class Workspace:
                             e_cost = self.heuristic_power(neighbor, end_node, mission)
                             punish = 0
                             a_cost = t_cost + e_cost + punish
-                            print(f"t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}")
+                            print(f"t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
 
                             heapq.heappush(pq, (a_cost, neighbor))  # Use the f cost as the priority
             except Exception as e:
@@ -454,7 +462,7 @@ class Workspace:
 
         print(path_coordinates)
 
-        return path_coordinates
+        return EnergyPath(path_coordinates, a_cost)
 
 
     def generate_random_path(self):
@@ -571,27 +579,14 @@ class Workspace:
                 break
 
             for neighbor in get_neighbors(current):
-                # Calculate tentative cost through current node
-                for velocity in velocities:
-                    neighbor.velocity = velocity
-                    c_cost = visited[current] + distance(current, neighbor)  # Actual cost to reach the current node
-                    n_cost = self.heuristic_power(current,
-                                                  neighbor, mission)  # Estimated cost to reach the goal from the current node
-                    t_cost = c_cost + n_cost  # Total cost
-                    tentative_cost = visited[current] + distance(current, neighbor) + self.heuristic_power(current,
-                                                                                                           neighbor,
-                                                                                                           mission)
+                # Calculate tentative distance through current node
+                tentative_distance = visited[current] + distance(current, neighbor)
+                # If the tentative distance is less than the recorded distance to the neighbor, update it
+                if neighbor not in visited or tentative_distance < visited[neighbor]:
+                    visited[neighbor] = tentative_distance
+                    heapq.heappush(pq, (tentative_distance + heuristic_distance(neighbor), neighbor))
+                    predecessor[neighbor] = current
 
-
-                    # If the tentative cost is less than the recorded cost to the neighbor, update it
-                    if neighbor not in visited or t_cost < visited[neighbor]:
-                        visited[neighbor] = t_cost
-                        predecessor[neighbor] = current
-                        e_cost = self.heuristic_power(neighbor, end_node, mission)
-                        a_cost = t_cost + e_cost
-                        heapq.heappush(pq, (a_cost, neighbor))  # Use the f cost as the priority
-
-        print(f"Baseline Path: t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}")
         path = []
         current = end_node
         while current in predecessor:
@@ -615,33 +610,30 @@ class Workspace:
         if z_target + clearance_height <= self.max_bounds[2]:
             baseline_path.append(start_node)
             for coordinate in path:
-                new_coordinate = Node(coordinate.x, coordinate.y,
-                                      z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
-                baseline_path.append(new_coordinate)
+                if coordinate != end_node:
+                    new_coordinate = Node(coordinate.x, coordinate.y,
+                                          z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+                    baseline_path.append(new_coordinate)
+                else:
+                    baseline_path.append(end_node)
 
-            baseline_path.append(end_node)
             path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
             print(path_coordinates)
-            return path_coordinates
+
+            power = 0
+
+            previous_node = None
+            for node in baseline_path:
+                if previous_node is not None and node != end_node:
+                    node.velocity = 12
+                    power += self.heuristic_power(previous_node, node, mission)
+                elif node == end_node:
+                    power += self.heuristic_power(previous_node, node, mission)
+                previous_node = node
+
+
+            print("POWER: ", power)
+            return EnergyPath(path_coordinates, power)
         else:
             raise NotImplementedError('The baseline path is too high for the workspace')
-
-
-def check_model():
-    input_array = [[50, 0, 0, # time, wind_speed, wind_angle
-                    100, 100, 0, # postions
-                    4, 0, 0, # velocities
-                    4, 0, 0, #accelerations
-                    500 # payloads
-                    ]]
-
-    target_labels = ml_model.predict(input_array)
-    return target_labels
-
-target_labels = check_model()
-print(target_labels)
-
-pow_res = power(target_labels)
-
-print(pow_res)
 

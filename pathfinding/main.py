@@ -29,12 +29,20 @@ def setup_workspace():
 
 def find_and_show_optimal_path():
     workspace = setup_workspace()
-    mission = Mission(Node(0, 0, 0), Node(325, 325, 0), 500)
-    flight_path_optimal = workspace.find_optimal_path(mission)
-    flight_path_baseline = workspace.find_baseline_path(mission)
+    mission = Mission(Node(0, 0, 0), Node(25, 25, 0), 500)
+    flight_optimal = workspace.find_optimal_path(mission)
+    flight_baseline = workspace.find_baseline_path(mission)
 
-    workspace.add_flight_path(flight_path=flight_path_baseline)
-    workspace.add_flight_path(flight_path=flight_path_optimal)
+    energy_diff = flight_optimal.energy / flight_baseline.energy * 100
+    if energy_diff > 100:
+        raise ValueError("Baseline cheaper than optimal path!")
+    print("optimal path", flight_optimal.path)
+    print("baseline path", flight_baseline.path)
+
+    print(f"optimal / baseline * 100: {energy_diff}")
+
+    workspace.add_flight_path(flight_path=flight_baseline.path)
+    workspace.add_flight_path(flight_path=flight_optimal.path)
 
     # Options: 2D or 3D
     workspace.plot_space(dimension='2D', dpi=800, show_wind=False)
