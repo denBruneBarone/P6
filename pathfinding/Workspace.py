@@ -136,18 +136,6 @@ class Workspace:
         return rotated_wind_speed_grid
 
     def add_blockage(self, blockage):
-        # if len(blockage_matrix.shape) != self.dimensions:
-        #     raise ValueError(f"Blockage matrix dimensions must match the space dimensions")
-        # for i in range(self.dimensions):
-        #     if not (0 <= position[i] <= self.max_bounds[i]):
-        #         raise ValueError(f"Blockage position must be within the specified bounds")
-        #     if position[i] + blockage_matrix.shape[i] > self.max_bounds[i]:
-        #         raise ValueError(f"Blockage does not fit within the space dimensions")
-        # self.blockages.append((blockage_matrix, position))
-
-        # if len(blockage_matrix.shape) != self.dimensions:
-        #     raise ValueError(f"Blockage matrix dimensions must match the space dimensions")
-
         if len(blockage.np_array.shape) != self.dimensions:
             raise ValueError(f"Blockage matrix dimensions must match the space dimensions")
         for i in range(self.dimensions):
@@ -155,7 +143,8 @@ class Workspace:
                 raise ValueError(f"Blockage position must be within the specified bounds")
             if blockage.positions[i] + blockage.np_array.shape[i] > self.max_bounds[i]:
                 raise ValueError(f"Blockage does not fit within the space dimensions")
-        self.blockages.append((blockage))
+        self.blockages.append(blockage)
+        print(self.blockages)
 
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)

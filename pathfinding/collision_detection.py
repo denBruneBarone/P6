@@ -42,10 +42,12 @@ def check_segment_intersects_blockages(xs, ys, zs, blockages):
 
     for blockage in blockages:
 
-        if np.all(blockage == 1):
+        # xxx = np.all(blockage.np_array == 1)
+        # #
+        # if np.all(blockage == 1):
             # Extract blockage properties
-            block_position = blockage[1]
-            block_size_x, block_size_y, block_size_z = blockage[0].shape
+            block_position = blockage.positions
+            block_size_x, block_size_y, block_size_z = blockage.np_array.shape
 
             for i in range(len(xs) - 1):
                 # Accessing coordinates of the line segment
