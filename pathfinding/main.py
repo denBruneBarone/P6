@@ -17,20 +17,23 @@ def setup_workspace(mission):
     # space.add_blockage(no_fly_zone_blockage, no_fly_zone_position)
 
     # Add a blockage (building) represented as a matrix
-    blockage_matrix_1 = np.ones((40, 80, 30))  # Define a 2x2x3 blockage matrix
-    position_1 = [120, 120, 0]  # Specify the position of the blockage
-    space.add_blockage(blockage_matrix_1, position_1)
+    # blockage_matrix_1 = np.ones((40, 80, 30))  # Define a 2x2x3 blockage matrix
+    # position_1 = [120, 120, 0]  # Specify the position of the blockage
+    # space.add_blockage(blockage_matrix_1, position_1)
+    #
+    # # Add a blockage (building) represented as a matrix
+    # blockage_matrix_2 = np.ones((50, 50, 30))  # Define a 2x2x3 blockage matrix
+    # position_2 = [250, 250, 0]  # Specify the position of the blockage
+    # space.add_blockage(blockage_matrix_2, position_2)
 
-    # Add a blockage (building) represented as a matrix
-    blockage_matrix_2 = np.ones((50, 50, 30))  # Define a 2x2x3 blockage matrix
-    position_2 = [250, 250, 0]  # Specify the position of the blockage
-    space.add_blockage(blockage_matrix_2, position_2)
+    blockage_matrix_1 = Blockage(40, 80, 30, 120, 120, 0, 'obstacle')
+    space.add_blockage(blockage_matrix_1)
+    blockage_matrix_2 = Blockage(120, 120, 0, 250, 250, 0, 'obstacle')
+    space.add_blockage(blockage_matrix_2)
 
     clear_distance = 10
     # Add Windfield
     # space.add_wind_field(45, 10)
-
-    takeoff_area = np.zeros((clear_distance, clear_distance, min_height))
 
     start_point = mission.start
     end_point = mission.end
@@ -86,11 +89,11 @@ def setup_workspace(mission):
     if x_start < 0 or x_end < 0 or y_start < 0 or y_end < 0:
         raise ValueError("Adjusted start and end points are out of bounds")
 
-    takeoff_area_position = [x_start, y_start, z]
-    space.add_blockage(takeoff_area, takeoff_area_position)
+    takeoff_area = Blockage(clear_distance, clear_distance, min_height, x_start, y_start, z, 'takeoff')
+    space.add_blockage(takeoff_area)
 
-    takeoff_area_position = [x_end, y_end, z]
-    space.add_blockage(takeoff_area, takeoff_area_position)
+    landing_area = Blockage(clear_distance, clear_distance, min_height, x_end, y_end, z, 'landing')
+    space.add_blockage(landing_area)
 
     return space
 

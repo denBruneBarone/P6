@@ -204,9 +204,9 @@ class Workspace:
             ax.scatter(0, 0, 0, color='k')
 
             # Plot blockages
-            for blockage_matrix, position in self.blockages:
-                x, y, z = position
-                ax.bar3d(x, y, z, *blockage_matrix.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5)
+            for blockage_matrix in self.blockages:
+                x, y, z = blockage_matrix.positions
+                ax.bar3d(x, y, z, *blockage_matrix.np_array.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5)
 
             ax = self.plot_flight_paths(ax, dimension='3D')
 
@@ -226,10 +226,10 @@ class Workspace:
             ax.scatter(0, 0, color='k')
 
             # Plot blockages
-            for blockage_matrix, position in self.blockages:
-                x, y = position[:2]
+            for blockage_matrix in self.blockages:
+                x, y = blockage_matrix.positions[:2]
                 ax.add_patch(
-                    plt.Rectangle((x, y), blockage_matrix.shape[0], blockage_matrix.shape[1], color='k', alpha=0.5))
+                    plt.Rectangle((x, y), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[1], color='k', alpha=0.5))
 
             if show_wind:
                 grid_color = 'white'
