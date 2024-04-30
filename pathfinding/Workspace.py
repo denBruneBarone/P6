@@ -452,8 +452,6 @@ class Workspace:
         # Convert path nodes to coordinates
         path_coordinates = [(node.x, node.y, node.z) for node in path]
 
-        print(path_coordinates)
-
         return path_coordinates
 
 
@@ -617,7 +615,7 @@ class Workspace:
 
             baseline_path.append(end_node)
             path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
-            print(path_coordinates)
+
             return path_coordinates
         else:
             raise NotImplementedError('The baseline path is too high for the workspace')
