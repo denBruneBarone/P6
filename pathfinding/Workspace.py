@@ -329,9 +329,6 @@ class Workspace:
         wind_speed = 0  # Assuming you'll update this logic accordingly
         wind_angle = 0  # Assuming you'll update this logic accordingly
 
-        if time == 0:
-            pass
-
         if current_node.x == mission.end.x:
             return 0  # Assuming you want to return 0 for the end node
         linear_acceleration_x = next_node.velocity_x / time
