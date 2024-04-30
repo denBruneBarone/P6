@@ -29,7 +29,7 @@ def setup_workspace():
 
 def find_and_show_optimal_path():
     workspace = setup_workspace()
-    mission = Mission(Node(0, 0, 0), Node(25, 25, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(200, 200, 0), 500)
     flight_optimal = workspace.find_optimal_path(mission)
     flight_baseline = workspace.find_baseline_path(mission)
 

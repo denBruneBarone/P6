@@ -259,8 +259,8 @@ class Workspace:
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
-    def calculate_time(self, current_node, next_node, mission):
-        def set_velocity_axis_return_distance(axis, current_node, next_node):
+    def calculate_time(self, current_node, next_node, mission, isHeuristic):
+        def set_velocity_axis_return_distance(axis, current_node, next_node, isHeuristic):
             current_velocity = current_node.velocity
             next_velocity = next_node.velocity
             end_node = mission.end
@@ -273,8 +273,12 @@ class Workspace:
             if next_node == end_node:
                 next_velocity = 0
 
+            if isHeuristic:
+                setattr(current_node, 'velocity_' + axis, current_velocity)
+
             if next_velocity == 0:
                 return diff_coord
+
 
             # TODO: Skriv i paper
             if axis != 'z':
@@ -287,7 +291,7 @@ class Workspace:
         time_axes = []
         for axis in ['x', 'y', 'z']:
             # check om er 20 m og 3 m væk. hvis ja, kald denne. ellers exception
-            dist = set_velocity_axis_return_distance(axis, current_node, next_node)
+            dist = set_velocity_axis_return_distance(axis, current_node, next_node, isHeuristic)
 
             velocity_current_axis = getattr(current_node, 'velocity_' + axis)
             velocity_next_axis = getattr(next_node, 'velocity_' + axis)
@@ -324,12 +328,12 @@ class Workspace:
             print('time is 0')
         return max_time
 
-    def heuristic_power(self, current_node, next_node, mission):
-        time = self.calculate_time(current_node, next_node, mission)
+    def heuristic_power(self, current_node, next_node, mission, isHeuristic=False):
+        time = self.calculate_time(current_node, next_node, mission, isHeuristic)
         wind_speed = 0  # Assuming you'll update this logic accordingly
         wind_angle = 0  # Assuming you'll update this logic accordingly
 
-        if current_node.x == mission.end.x:
+        if current_node == mission.end:
             return 0  # Assuming you want to return 0 for the end node
         linear_acceleration_x = next_node.velocity_x / time
         linear_acceleration_y = next_node.velocity_y / time
@@ -400,7 +404,7 @@ class Workspace:
                     new_node = Node(new_x, new_y, new_z)
                     if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                               [node.z, new_z],
-                                                                              self.blockages) is False and new_z >= 0:
+                                                                              self.blockages) is False and new_z >= 0 and new_y >= 0 and new_x >= 0:
                         neighbors.append(new_node)
             return neighbors
 
@@ -437,10 +441,10 @@ class Workspace:
                         if neighbor not in visited or t_cost < visited[neighbor]:
                             visited[neighbor] = t_cost
                             predecessor[neighbor] = current
-                            e_cost = self.heuristic_power(neighbor, end_node, mission)
+                            h_cost = self.heuristic_power(neighbor, end_node, mission, isHeuristic=True)
                             punish = 0
-                            a_cost = t_cost + e_cost + punish
-                            print(f"t_cost: {t_cost}, e_cost: {e_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
+                            a_cost = t_cost + h_cost + punish
+                            print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
 
                             heapq.heappush(pq, (a_cost, neighbor))  # Use the f cost as the priority
             except Exception as e:
@@ -537,8 +541,6 @@ class Workspace:
             (-20, 0, 0),
             (-h, -h, 0),
         ]
-
-        velocities = (10, 12)
 
         def distance(node1, node2):
             dist_x = (node1.x - node2.x) ** 2
