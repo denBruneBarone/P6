@@ -1,6 +1,9 @@
 from pathfinding.Mission import Mission
 from pathfinding.Workspace import Workspace
 from pathfinding.Node import Node
+from pathfinding.find_paths import find_baseline_path, find_optimal_path
+import numpy as np
+import time
 from pathfinding.Blockage import Blockage
 # import numpy as np
 
@@ -16,10 +19,9 @@ def setup_workspace(mission):
     blockage_matrix_2 = Blockage(50, 50, 30, 20, 20, 0, 'obstacle')
     space.add_blockage(blockage_matrix_2)
 
-    clear_distance = 10
+    # clear_distance = 10
     # Add Windfield
     space.add_wind_field(45, 10)
-
 
     # min_height = 30
 
@@ -87,15 +89,28 @@ def setup_workspace(mission):
 
 
 def find_and_show_optimal_path():
-    mission = Mission(Node(0, 0, 0), Node(110, 110, 0), 500)
-
+    mission = Mission(Node(0, 0, 0), Node(100, 100, 0), 500)
     workspace = setup_workspace(mission)
-    flight_path = workspace.find_optimal_path()
-    #flight_path = workspace.find_baseline_path()
 
-    workspace.add_flight_path(flight_path=flight_path)
+    start_time = time.time()
+    flight_optimal = find_optimal_path(workspace, mission)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("time for optimal path: ", elapsed_time)
 
-    # Options: 2D or 3D
+    flight_baseline = find_baseline_path(workspace, mission)
+
+    energy_diff = flight_optimal.energy / flight_baseline.energy * 100
+    if energy_diff > 100:
+        raise ValueError("Baseline cheaper than optimal path!")
+    print("optimal path", flight_optimal.path)
+    print("baseline path", flight_baseline.path)
+
+    print(f"optimal / baseline * 100: {energy_diff}")
+
+    workspace.add_flight_path(flight_path=flight_baseline.path)
+    workspace.add_flight_path(flight_path=flight_optimal.path)
+
     workspace.plot_space(dimension='2D', dpi=800, show_wind=False)
     workspace.plot_space(dimension='3D', dpi=800)
 
