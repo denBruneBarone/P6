@@ -238,6 +238,7 @@ class Workspace:
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
+    # For testing collision detection
     def generate_random_path(self):
         # Access blockages directly from the workspace
         blockages = self.blockages
@@ -275,6 +276,7 @@ class Workspace:
 
         return flight_path
 
+    # For testing collision detection
     @staticmethod
     def generate_path_completely_fill_blockage(grid_size=400, blockage_size=50, blockage_x=250, blockage_y=250):
         path = []
