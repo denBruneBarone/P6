@@ -89,16 +89,19 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
         time = t1 + t2
 
         if time < 0:
-            raise ValueError("Time less than zero!")
+            raise ValueError("Time is negative for axis ", axis, " in nodes ", current_node, " & ", next_node)
         time_axes.append(time)
 
     max_time = max(time_axes)
     if max_time == 0:
-        print('time is 0')
+        raise ValueError('max_time is 0! for nodes', current_node, " & ", next_node)
     return max_time
 
 
 def heuristic_power(current_node, next_node, mission, is_heuristic=False):
+    if current_node == next_node:
+        return 0
+
     time = calculate_time(current_node, next_node, mission, is_heuristic)
     wind_speed = 0
     wind_angle = 0
@@ -335,12 +338,11 @@ def find_optimal_path(workspace, mission):
                     if neighbor not in visited or t_cost < visited[neighbor]:
                         visited[neighbor] = t_cost
                         predecessor[neighbor] = current
-                        h_cost = heuristic_power(neighbor, end_node, mission, is_heuristic=True)
+                        h_cost = heuristic_power(neighbor, end_node, mission, is_heuristic=True)  # heuristic cost
                         punish = 0
                         if neighbor.z <= 10:
                             punish = (10 - neighbor.z) * 130
-                        a_cost = t_cost + h_cost + punish
-                        a_cost = 1 * t_cost + 1 * h_cost + punish # absolute cost
+                        a_cost = 1 * t_cost + 1 * h_cost + punish  # absolute cost
                         # print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
 
                         heapq.heappush(pq, (a_cost, neighbor))  # absolute cost is used for pq
