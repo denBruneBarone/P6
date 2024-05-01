@@ -14,8 +14,8 @@ def setup_workspace(mission):
 
     blockage_matrix_1 = Blockage(40, 80, 30, 220, 220, 0, 'obstacle')
     space.add_blockage(blockage_matrix_1)
-    blockage_matrix_2 = Blockage(50, 50, 3, 20, 20, 0, 'obstacle')
-    space.add_blockage(blockage_matrix_2)
+    # blockage_matrix_2 = Blockage(50, 50, 3, 20, 20, 0, 'obstacle')
+    # space.add_blockage(blockage_matrix_2)
 
     # clear_distance = 10
     # Add Windfield
@@ -45,10 +45,10 @@ def find_and_show_optimal_path():
     print(f"optimal / baseline * 100: {energy_diff}")
 
     workspace.add_flight_path(flight_path=flight_baseline.path)
-    # workspace.add_flight_path(flight_path=flight_optimal.path)
+    workspace.add_flight_path(flight_path=flight_optimal.path)
 
     workspace.plot_space(dimension='2D', dpi=800, show_wind=False)
-    workspace.plot_space(dimension='3D', dpi=800)
+    # workspace.plot_space(dimension='3D', dpi=800)
 
 
 if __name__ == '__main__':

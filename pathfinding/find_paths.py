@@ -87,16 +87,19 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
         time = t1 + t2
 
         if time < 0:
-            raise ValueError("Time less than zero!")
+            raise ValueError("Time is negative for axis ", axis, " in nodes ", current_node, " & ", next_node)
         time_axes.append(time)
 
     max_time = max(time_axes)
     if max_time == 0:
-        print('time is 0')
+        raise ValueError('max_time is 0! for nodes', current_node, " & ", next_node)
     return max_time
 
 
 def heuristic_power(current_node, next_node, mission, is_heuristic=False):
+    if current_node == next_node:
+        return 0
+
     time = calculate_time(current_node, next_node, mission, is_heuristic)
     wind_speed = 0
     wind_angle = 0
