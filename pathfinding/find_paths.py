@@ -280,6 +280,9 @@ def find_optimal_path(workspace, mission):
             end_node.velocity_z = 0
             neighbors.append(end_node)
 
+            if node == start_node:
+                raise Exception("Start node next to end node")
+
         else:
             for dist_x, dist_y, dist_z in directions:
                 new_x = node.x + dist_x
@@ -325,7 +328,7 @@ def find_optimal_path(workspace, mission):
 
                         heapq.heappush(pq, (a_cost, neighbor))  # absolute cost is used for pq
         except Exception as e:
-            print(f'An error ocurred: {e}')
+            raise IOError(f'An error ocurred: {e}')
 
     path = []
     current = end_node

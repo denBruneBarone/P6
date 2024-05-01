@@ -25,24 +25,24 @@ def setup_workspace(mission):
 
 
 def find_and_show_optimal_path():
-    mission = Mission(Node(0, 0, 0), Node(100, 100, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(10, 10, 0), 500)
     workspace = setup_workspace(mission)
 
-    # start_time = time.time()
-    # flight_optimal = find_optimal_path(workspace, mission)
-    # end_time = time.time()
-    # elapsed_time = end_time - start_time
-    # print("time for optimal path: ", elapsed_time)
+    start_time = time.time()
+    flight_optimal = find_optimal_path(workspace, mission)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("time for optimal path: ", elapsed_time)
 
     flight_baseline = find_baseline_path(workspace, mission)
 
-    # energy_diff = flight_optimal.energy / flight_baseline.energy * 100
-    # if energy_diff > 100:
-    #     raise ValueError("Baseline cheaper than optimal path!")
-    # print("optimal path", flight_optimal.path, "energy", flight_optimal.energy)
-    # print("baseline path", flight_baseline.path, "energy", flight_baseline.energy)
+    energy_diff = flight_optimal.energy / flight_baseline.energy * 100
+    if energy_diff > 100:
+        raise ValueError("Baseline cheaper than optimal path!")
+    print("optimal path", flight_optimal.path, "energy", flight_optimal.energy)
+    print("baseline path", flight_baseline.path, "energy", flight_baseline.energy)
 
-    # print(f"optimal / baseline * 100: {energy_diff}")
+    print(f"optimal / baseline * 100: {energy_diff}")
 
     workspace.add_flight_path(flight_path=flight_baseline.path)
     # workspace.add_flight_path(flight_path=flight_optimal.path)
