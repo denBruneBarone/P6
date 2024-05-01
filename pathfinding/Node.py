@@ -10,6 +10,12 @@ class Node:
 
         if velocity is None:
             self.velocity = 0
+        if velocity_x is None:
+            self.velocity_x = 0
+        if velocity_y is None:
+            self.velocity_y = 0
+        if velocity_z is None:
+            self.velocity_z = 0
 
     def __eq__(self, other):
         return (self.x, self.y, self.z) == (other.x, other.y, other.z)

@@ -61,7 +61,7 @@ class Workspace:
         while 0 <= x < self.max_bounds[0] and 0 <= y < self.max_bounds[1]:
             # Check for blockages at the current point
 
-            print("Current position:", x, y)  # Print current position
+            # print("Current position:", x, y)  # Print current position
 
             for i in range(start_point[0], end_point[0] + x_step, x_step):
                 xs = [start_point[0], x + x_step]
@@ -69,14 +69,15 @@ class Workspace:
                 for j in range(start_point[1], end_point[1] + y_step, y_step):
                     ys = [start_point[1], y + y_step]
 
-                    print("Segment coordinates:", xs, ys)  # Print segment coordinates
+                    # print("Segment coordinates:", xs, ys)  # Print segment coordinates
 
                     if not collision_detection.check_segment_intersects_blockages(xs, ys, [0, 0], self.blockages):
                         # Store the wind speed in the grid
                         wind_speed_grid[x, y] = wind_speed
                     else:
                         # If there is a blockage, stop casting the ray
-                        print('Found a blockage')
+                        # print('Found a blockage')
+                        pass
 
                     # Move to the next grid cell along the ray direction
                     y += y_step

@@ -14,7 +14,7 @@ def setup_workspace(mission):
 
     blockage_matrix_1 = Blockage(40, 80, 30, 220, 220, 0, 'obstacle')
     space.add_blockage(blockage_matrix_1)
-    blockage_matrix_2 = Blockage(50, 50, 30, 20, 20, 0, 'obstacle')
+    blockage_matrix_2 = Blockage(50, 50, 3, 20, 20, 0, 'obstacle')
     space.add_blockage(blockage_matrix_2)
 
     # clear_distance = 10
@@ -28,24 +28,24 @@ def find_and_show_optimal_path():
     mission = Mission(Node(0, 0, 0), Node(100, 100, 0), 500)
     workspace = setup_workspace(mission)
 
-    start_time = time.time()
-    flight_optimal = find_optimal_path(workspace, mission)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print("time for optimal path: ", elapsed_time)
+    # start_time = time.time()
+    # flight_optimal = find_optimal_path(workspace, mission)
+    # end_time = time.time()
+    # elapsed_time = end_time - start_time
+    # print("time for optimal path: ", elapsed_time)
 
     flight_baseline = find_baseline_path(workspace, mission)
 
-    energy_diff = flight_optimal.energy / flight_baseline.energy * 100
-    if energy_diff > 100:
-        raise ValueError("Baseline cheaper than optimal path!")
-    print("optimal path", flight_optimal.path)
-    print("baseline path", flight_baseline.path)
+    # energy_diff = flight_optimal.energy / flight_baseline.energy * 100
+    # if energy_diff > 100:
+    #     raise ValueError("Baseline cheaper than optimal path!")
+    # print("optimal path", flight_optimal.path, "energy", flight_optimal.energy)
+    # print("baseline path", flight_baseline.path, "energy", flight_baseline.energy)
 
-    print(f"optimal / baseline * 100: {energy_diff}")
+    # print(f"optimal / baseline * 100: {energy_diff}")
 
-    # workspace.add_flight_path(flight_path=flight_baseline.path)
-    workspace.add_flight_path(flight_path=flight_optimal.path)
+    workspace.add_flight_path(flight_path=flight_baseline.path)
+    # workspace.add_flight_path(flight_path=flight_optimal.path)
 
     workspace.plot_space(dimension='2D', dpi=800, show_wind=False)
     workspace.plot_space(dimension='3D', dpi=800)
