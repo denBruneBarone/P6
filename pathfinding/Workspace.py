@@ -1,14 +1,7 @@
-import os
-import pickle
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 import numpy as np
-import pathfinding.collision_detection
 from pathfinding import collision_detection
-import heapq
-import math
-from pathfinding.Node import Node
-from pathfinding.EnergyPath import EnergyPath
 
 
 class Workspace:
