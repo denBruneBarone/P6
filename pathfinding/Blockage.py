@@ -15,6 +15,3 @@ class Blockage:
             raise ValueError("Invalid blockage type")
         self.positions = [pos_x, pos_y, pos_z]
         self.type = b_type
-        # self.pos_x = pos_x
-        # self.pos_y = pos_y
-        # self.pos_z = pos_z

@@ -2,16 +2,12 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
-
 import numpy as np
-import random
-
 import pathfinding.collision_detection
 from pathfinding import collision_detection
 import heapq
 import math
 from pathfinding.Node import Node
-from Blockage import Blockage
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 # Define the path for saving/loading the model
@@ -208,7 +204,8 @@ class Workspace:
             # Plot blockages
             for blockage_matrix in self.blockages:
                 x, y, z = blockage_matrix.positions
-                ax.bar3d(x, y, z, *blockage_matrix.np_array.shape, color='k', alpha=0.5, edgecolor='black', linewidth=0.5)
+                ax.bar3d(x, y, z, *blockage_matrix.np_array.shape, color='k', alpha=0.5, edgecolor='black',
+                         linewidth=0.5)
 
             ax = self.plot_flight_paths(ax, dimension='3D')
 
@@ -231,7 +228,8 @@ class Workspace:
             for blockage_matrix in self.blockages:
                 x, y = blockage_matrix.positions[:2]
                 ax.add_patch(
-                    plt.Rectangle((x, y), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[1], color='k', alpha=0.5))
+                    plt.Rectangle((x, y), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[1],
+                                  color='k', alpha=0.5))
 
             if show_wind:
                 grid_color = 'white'
