@@ -317,6 +317,9 @@ def find_optimal_path(workspace, mission):
                         predecessor[neighbor] = current
                         h_cost = heuristic_power(neighbor, end_node, mission, is_heuristic=True)
                         punish = 0
+                        if neighbor.z <= 10:
+                            punish = (10 - neighbor.z) * 130
+                        a_cost = t_cost + h_cost + punish
                         a_cost = 1 * t_cost + 1 * h_cost + punish # absolute cost
                         # print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
 
