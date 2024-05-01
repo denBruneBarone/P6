@@ -25,7 +25,7 @@ def setup_workspace(mission):
 
 
 def find_and_show_optimal_path():
-    mission = Mission(Node(0, 0, 0), Node(10, 10, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(100, 100, 0), 500)
     workspace = setup_workspace(mission)
 
     start_time = time.time()
