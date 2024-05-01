@@ -1,5 +1,7 @@
 import os
 import pickle
+import time
+
 import pathfinding.collision_detection
 from pathfinding import collision_detection
 import heapq
@@ -202,12 +204,26 @@ def find_baseline_path(workspace, mission):
     ys = []
     zs = []
 
+    z_target = 0
+
     for point in path:
         xs.append(point.x)
         ys.append(point.y)
         zs.append(point.z)
 
-    z_target = pathfinding.collision_detection.find_max_intersection_z(xs, ys, zs, workspace.blockages)
+    for i in range(len(xs) - 1):
+        x_pair = [xs[i], xs[i + 1]]
+        y_pair = [ys[i], ys[i + 1]]
+        z_pair = [zs[i], zs[i + 1]]
+
+        segments_intersects = collision_detection.check_segment_intersects_blockages(x_pair, y_pair, z_pair,
+                                                                                     workspace.blockages)
+
+        if segments_intersects:
+            new_z_target = pathfinding.collision_detection.find_max_intersection_z(x_pair, y_pair, z_pair,
+                                                                               workspace.blockages)
+            if new_z_target > z_target:
+                z_target = new_z_target
     baseline_path = []
     clearance_height = 5
 
@@ -242,10 +258,11 @@ def find_baseline_path(workspace, mission):
 
 
 def find_optimal_path(workspace, mission):
+    start_time = time.time()
     print('Finding optimal path...')
     start_node = mission.start
     end_node = mission.end
-    end_node.velocity_x = 0 #TODO: Check om nødvendigt
+    end_node.velocity_x = 0  # TODO: Check om nødvendigt
     end_node.velocity_y = 0
     end_node.velocity_z = 0
 
@@ -341,5 +358,7 @@ def find_optimal_path(workspace, mission):
     path_coordinates = [(node.x, node.y, node.z) for node in path]
 
     print(path_coordinates)
-
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("time for optimal path: ", elapsed_time)
     return EnergyPath(path_coordinates, a_cost)
