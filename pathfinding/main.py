@@ -2,7 +2,6 @@ from pathfinding.Mission import Mission
 from pathfinding.Workspace import Workspace
 from pathfinding.Node import Node
 from pathfinding.find_paths import find_baseline_path, find_optimal_path
-import time
 from pathfinding.Blockage import Blockage
 import warnings
 
