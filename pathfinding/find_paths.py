@@ -358,6 +358,7 @@ def find_optimal_path(workspace, mission):
     print(path_coordinates)
 
     power = a_cost
+
     for node in path:
         if node != start_node and node != end_node:
             if node.z <= 10:
@@ -366,8 +367,8 @@ def find_optimal_path(workspace, mission):
     print("power", power)
     print("a_cost", a_cost)
 
-    if power <= a_cost:
-        raise ValueError("power is larger after deducting punishment!")
+    if power > a_cost:
+        raise ValueError("power is larger than a_cost after deducting punishment")
 
     end_time = time.time()
     elapsed_time = end_time - start_time
