@@ -212,17 +212,16 @@ def find_baseline_path(workspace, mission):
 
     z_target = pathfinding.collision_detection.find_max_intersection_z(xs, ys, zs, workspace.blockages)
     baseline_path = []
-    clearance_height = 5
+    clearance_height = 3
 
     if z_target + clearance_height <= workspace.max_bounds[2]:
         baseline_path.append(start_node)
         for coordinate in path:
-            if coordinate != end_node:
-                new_coordinate = Node(coordinate.x, coordinate.y,
-                                      z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
-                baseline_path.append(new_coordinate)
-            else:
-                baseline_path.append(end_node)
+            new_coordinate = Node(coordinate.x, coordinate.y,
+                                  z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+            baseline_path.append(new_coordinate)
+
+        baseline_path.append(end_node)
 
         path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
         print(path_coordinates)
@@ -248,9 +247,6 @@ def find_optimal_path(workspace, mission):
     print('Finding optimal path...')
     start_node = mission.start
     end_node = mission.end
-    end_node.velocity_x = 0 #TODO: Check om nødvendigt
-    end_node.velocity_y = 0
-    end_node.velocity_z = 0
 
     h = 10 * math.sqrt(2)
     directions = [
@@ -294,7 +290,7 @@ def find_optimal_path(workspace, mission):
                 new_node = Node(new_x, new_y, new_z)
                 if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                           [node.z, new_z],
-                                                                          workspace.blockages) is False and new_z >= 0 and new_y >= 0 and new_x >= 0:
+                                                                          workspace.blockages) is False and new_z > 0 and new_y >= 0 and new_x >= 0:
                     neighbors.append(new_node)
         return neighbors
 
@@ -343,5 +339,15 @@ def find_optimal_path(workspace, mission):
     path_coordinates = [(node.x, node.y, node.z) for node in path]
 
     print(path_coordinates)
+
+    power = a_cost
+    for node in path:
+        if node != start_node and node != end_node:
+            if node.z <= 10:
+                power -= (10 - node.z) * 130
+
+    print("power", power)
+    print("a_cost", a_cost)
+
 
     return EnergyPath(path_coordinates, a_cost)
