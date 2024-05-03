@@ -117,7 +117,7 @@ class Workspace:
             if blockage.positions[i] + blockage.np_array.shape[i] > self.max_bounds[i]:
                 raise ValueError(f"Blockage does not fit within the space dimensions")
         self.blockages.append(blockage)
-        print(self.blockages)
+        # print(self.blockages)
 
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)
