@@ -89,12 +89,12 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
         time = t1 + t2
 
         if time < 0:
-            raise ValueError("Time is negative for axis ", axis, " in nodes ", current_node, " & ", next_node)
+            raise ValueError(f"Time is negative for axis {axis} in nodes {current_node} & {next_node}")
         time_axes.append(time)
 
     max_time = max(time_axes)
     if max_time == 0:
-        raise ValueError('max_time is 0! for nodes', current_node, " & ", next_node)
+        raise ValueError(f'max_time is 0! for nodes {current_node} & {next_node}')
     return max_time
 
 
@@ -233,11 +233,12 @@ def find_baseline_path(workspace, mission):
     if z_target + clearance_height <= workspace.max_bounds[2]:
         baseline_path.append(start_node)
         for coordinate in path:
-            new_coordinate = Node(coordinate.x, coordinate.y,
-                                  z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
-            baseline_path.append(new_coordinate)
-
-        baseline_path.append(end_node)
+            if coordinate != end_node:
+                new_coordinate = Node(coordinate.x, coordinate.y,
+                                      z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+                baseline_path.append(new_coordinate)
+            else:
+                baseline_path.append(end_node)
 
         path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
         print(path_coordinates)
