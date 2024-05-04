@@ -9,7 +9,7 @@ from pathfinding.EnergyPath import EnergyPath
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 # Define the path for saving/loading the model
-MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/trained_model.pkl")
+MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/best_model.pkl")
 
 
 def load_model(file_path):

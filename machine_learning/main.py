@@ -4,11 +4,18 @@ from machine_learning.pre_processing import pre_process_and_split_data
 from machine_learning.prepare_for_training import format_data
 from machine_learning.training import train_model, evaluate_model
 
+from sklearn.tree import DecisionTreeClassifier
+from six import StringIO
+from IPython.display import Image
+from sklearn.tree import export_graphviz
+import pydotplus
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 flights_processed = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
 
 # Define the path for saving/loading the model
 MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/trained_model.pkl")
+GRAPH_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/decision_tree.png")
 
 
 def train():
@@ -26,6 +33,12 @@ def train():
         with open(MODEL_FILE_PATH, 'rb') as model_file:
             model = pickle.load(model_file)
         evaluate_model(model, test_data, save_predictions_in_excel=False)
+        dot_data = StringIO()
+        export_graphviz(model, out_file=dot_data, filled=True, rounded=True, special_characters=True)
+        graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+        Image(filename=GRAPH_FILE_PATH)
+        graph.write_png(GRAPH_FILE_PATH)
+
     else:
         model = train_model(train_data, test_data, use_grid_search=False)
 
@@ -33,6 +46,10 @@ def train():
         with open(MODEL_FILE_PATH, 'wb') as model_file:
             pickle.dump(model, model_file)
         print("Model saved in " + MODEL_FILE_PATH)
+
+
+
+
 
 
 if __name__ == "__main__":
