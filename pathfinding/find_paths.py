@@ -1,5 +1,7 @@
 import os
 import pickle
+import time
+
 import pathfinding.collision_detection
 from pathfinding import collision_detection
 import heapq
@@ -87,16 +89,19 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
         time = t1 + t2
 
         if time < 0:
-            raise ValueError("Time less than zero!")
+            raise ValueError(f"Time is negative for axis {axis} in nodes {current_node} & {next_node}")
         time_axes.append(time)
 
     max_time = max(time_axes)
     if max_time == 0:
-        print('time is 0')
+        raise ValueError(f'max_time is 0! for nodes {current_node} & {next_node}')
     return max_time
 
 
 def heuristic_power(current_node, next_node, mission, is_heuristic=False):
+    if current_node == next_node:
+        return 0
+
     time = calculate_time(current_node, next_node, mission, is_heuristic)
     wind_speed = 0
     wind_angle = 0
@@ -202,14 +207,28 @@ def find_baseline_path(workspace, mission):
     ys = []
     zs = []
 
+    z_target = 0
+
     for point in path:
         xs.append(point.x)
         ys.append(point.y)
         zs.append(point.z)
 
-    z_target = pathfinding.collision_detection.find_max_intersection_z(xs, ys, zs, workspace.blockages)
+    for i in range(len(xs) - 1):
+        x_pair = [xs[i], xs[i + 1]]
+        y_pair = [ys[i], ys[i + 1]]
+        z_pair = [zs[i], zs[i + 1]]
+
+        segments_intersects = collision_detection.check_segment_intersects_blockages(x_pair, y_pair, z_pair,
+                                                                                     workspace.blockages)
+
+        if segments_intersects:
+            new_z_target = pathfinding.collision_detection.find_max_intersection_z(x_pair, y_pair, z_pair,
+                                                                               workspace.blockages)
+            if new_z_target > z_target:
+                z_target = new_z_target
     baseline_path = []
-    clearance_height = 5
+    clearance_height = 3
 
     if z_target + clearance_height <= workspace.max_bounds[2]:
         baseline_path.append(start_node)
@@ -242,12 +261,10 @@ def find_baseline_path(workspace, mission):
 
 
 def find_optimal_path(workspace, mission):
+    start_time = time.time()
     print('Finding optimal path...')
     start_node = mission.start
     end_node = mission.end
-    end_node.velocity_x = 0 #TODO: Check om nødvendigt
-    end_node.velocity_y = 0
-    end_node.velocity_z = 0
 
     h = 10 * math.sqrt(2)
     directions = [
@@ -280,6 +297,9 @@ def find_optimal_path(workspace, mission):
             end_node.velocity_z = 0
             neighbors.append(end_node)
 
+            if node == start_node:
+                raise Exception("Start node next to end node")
+
         else:
             for dist_x, dist_y, dist_z in directions:
                 new_x = node.x + dist_x
@@ -288,7 +308,7 @@ def find_optimal_path(workspace, mission):
                 new_node = Node(new_x, new_y, new_z)
                 if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                           [node.z, new_z],
-                                                                          workspace.blockages) is False and new_z >= 0 and new_y >= 0 and new_x >= 0:
+                                                                          workspace.blockages) is False and new_z > 0 and new_y >= 0 and new_x >= 0:
                     neighbors.append(new_node)
         return neighbors
 
@@ -315,17 +335,16 @@ def find_optimal_path(workspace, mission):
                     if neighbor not in visited or t_cost < visited[neighbor]:
                         visited[neighbor] = t_cost
                         predecessor[neighbor] = current
-                        h_cost = heuristic_power(neighbor, end_node, mission, is_heuristic=True)
+                        h_cost = heuristic_power(neighbor, end_node, mission, is_heuristic=True)  # heuristic cost
                         punish = 0
                         if neighbor.z <= 10:
                             punish = (10 - neighbor.z) * 130
-                        a_cost = t_cost + h_cost + punish
-                        a_cost = 1 * t_cost + 1 * h_cost + punish # absolute cost
+                        a_cost = 1 * t_cost + 1 * h_cost + punish  # absolute cost
                         # print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
 
                         heapq.heappush(pq, (a_cost, neighbor))  # absolute cost is used for pq
         except Exception as e:
-            print(f'An error ocurred: {e}')
+            raise IOError(f'An error ocurred: {e}')
 
     path = []
     current = end_node
@@ -339,4 +358,21 @@ def find_optimal_path(workspace, mission):
 
     print(path_coordinates)
 
-    return EnergyPath(path_coordinates, a_cost)
+    power = a_cost
+
+    for node in path:
+        if node != start_node and node != end_node:
+            if node.z <= 10:
+                power -= (10 - node.z) * 130
+
+    print("power", power)
+    print("a_cost", a_cost)
+
+    if power > a_cost:
+        raise ValueError("power is larger than a_cost after deducting punishment")
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("time for optimal path: ", elapsed_time)
+
+    return EnergyPath(path_coordinates, power)
