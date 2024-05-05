@@ -28,6 +28,7 @@ def percentage_accuracy(true, predicted):
     percentage_accuracy_score = (1 - normalized_mae) * 100
     return percentage_accuracy_score
 
+
 def power(true_labels, predicted_labels):
     true_power = true_labels[:, 0] * true_labels[:, 1]
     predicted_power = predicted_labels[:, 0] * predicted_labels[:, 1]
@@ -83,7 +84,7 @@ def train_model(train_data, test_data, use_grid_search):
 
         grid_search.fit(train_features_np, train_targets_np)
         best_params = grid_search.best_params_
-        best_score = abs(grid_search.best_score_) #abs because of GreaterIsBetter
+        best_score = abs(grid_search.best_score_)  # abs because of GreaterIsBetter
 
         print("Best Params: ", best_params)
         print("Best score: ", best_score)
@@ -112,6 +113,11 @@ def train_model(train_data, test_data, use_grid_search):
 
 
 def evaluate_model(model, test_data, grid_search_results=None, save_predictions_in_excel=True):
+    def print_stats(arg1, arg2, arg3):
+        print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {arg1}")
+        print(f"Test Mean Absolute Error (MAE) for Voltage and Current: {arg2}")
+        print(f"Test Percentage Accuracy (PA) for Voltage and Current: {arg3}")
+
     print("Evaluating...")
     test_dataset = TrainingDataset(test_data)
 
@@ -125,22 +131,20 @@ def evaluate_model(model, test_data, grid_search_results=None, save_predictions_
     rmse_targets = rmse(test_targets_np, test_predictions)
     mae_targets = mae(test_targets_np, test_predictions)
     pa_targets = percentage_accuracy(test_targets_np, test_predictions)
-    print(f"Test Root Mean Squared Error (RMSE) for Voltage and Current: {rmse_targets}")
-    print(f"Test Mean Absolute Error (MAE) for Voltage and Current: {mae_targets}")
-    print(f"Test Percentage Accuracy (PA) for Voltage and Current: {pa_targets}")
+    print_stats(rmse_targets, mae_targets, pa_targets)
 
     true_power, predicted_power = power(test_targets_np, test_predictions)
     rmse_power = rmse(true_power, predicted_power)
     mae_power = mean_absolute_error(true_power, predicted_power)
     pa_power = percentage_accuracy(true_power, predicted_power)
-    print("Test Root Mean Squared Error (RMSE) for Power:", rmse_power)
-    print("Test Mean Absolute Error (MAE) for Power :", mae_power)
-    print("Test Percentage Accuracy (PA) for Power:", pa_power)
+
+    print_stats(rmse_power, mae_power, pa_power)
 
     if save_predictions_in_excel:
         predictions_to_excel(test_targets_np, test_predictions, true_power, predicted_power)
 
     if grid_search_results is not None:
-        hp_to_csv(grid_search_results['score'], rmse_targets, mae_targets, pa_targets, rmse_power, mae_power, pa_power, grid_search_results['params'])
+        hp_to_csv(grid_search_results['score'], rmse_targets, mae_targets, pa_targets, rmse_power, mae_power, pa_power,
+                  grid_search_results['params'])
 
     return model

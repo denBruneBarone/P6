@@ -1,6 +1,6 @@
 class HPConfig:
     criterion = 'friedman_mse'
-    max_depth = 10 # paper siger 7
+    max_depth = 10  # paper siger 7
     max_features = None
     max_leaf_nodes = 100
 
@@ -19,4 +19,3 @@ class GridSearchConfig:
         'max_features': [None, 'sqrt', 'log2'],
         'max_leaf_nodes': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     }
-

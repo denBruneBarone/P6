@@ -1,19 +1,11 @@
+import os
 import seaborn as sns
 import matplotlib.pyplot as plt
-import pandas as pd
-import os
 from machine_learning.prepare_for_training import format_data
 from machine_learning.pre_processing import *
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 file_path = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
-
-import seaborn as sns
-import matplotlib.pyplot as plt
-import pandas as pd
-import os
-from machine_learning.prepare_for_training import format_data
-from machine_learning.pre_processing import *
 
 
 def generate_correlation_heatmaps(file_path, cutoff=0.09):
@@ -42,5 +34,3 @@ def generate_correlation_heatmaps(file_path, cutoff=0.09):
 
 
 generate_correlation_heatmaps(file_path)
-
-
