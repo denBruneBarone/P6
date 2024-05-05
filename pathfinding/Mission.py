@@ -3,4 +3,3 @@ class Mission:
         self.start = start
         self.end = end
         self.payload = payload
-

@@ -1,11 +1,10 @@
 import os
 import pickle
 import time
-
 import pathfinding.collision_detection
-from pathfinding import collision_detection
 import heapq
 import math
+from pathfinding import collision_detection
 from pathfinding.Node import Node
 from pathfinding.EnergyPath import EnergyPath
 
@@ -32,18 +31,13 @@ def set_velocity_axis_return_distance(axis, current_node, next_node, mission, is
     current_velocity = current_node.velocity
     next_velocity = next_node.velocity
     end_node = mission.end
-
     diff_coord = abs(getattr(next_node, axis) - getattr(current_node, axis))
-
     if current_velocity == 0:
         setattr(current_node, 'velocity_' + axis, 0)
-
     if next_node == end_node:
         next_velocity = 0
-
     if is_heuristic:
         setattr(current_node, 'velocity_' + axis, current_velocity)
-
     if next_velocity == 0:
         return diff_coord
 
@@ -52,7 +46,6 @@ def set_velocity_axis_return_distance(axis, current_node, next_node, mission, is
         setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity))  # TODO: check paper
     else:
         setattr(next_node, 'velocity_' + axis, diff_coord / (3 / next_velocity))
-
     return diff_coord
 
 
@@ -120,11 +113,8 @@ def heuristic_power(current_node, next_node, mission, is_heuristic=False):
                     mission.payload]]
 
     target_labels = ml_model.predict(input_array)
-
     power_watt = power(target_labels)
-
     power_joule = power_watt * time
-
     return power_joule
 
 
@@ -138,10 +128,7 @@ def distance_v(node1, node2):
     return abs(node1.z - node2.z)
 
 
-def find_baseline_path(workspace, mission):
-    start_node = mission.start
-    end_node = mission.end
-
+def get_directions_baseline_path():
     h = 10 * math.sqrt(2)
     directions = [  # 8 directions, z-index always 0.
         (h, h, 0),
@@ -156,28 +143,87 @@ def find_baseline_path(workspace, mission):
         (-20, 0, 0),
         (-h, -h, 0),
     ]
+    return directions
+
+
+def get_directions_optimal_path():
+    h = 10 * math.sqrt(2)
+    directions = [
+        (h, h, 0), (h, h, 3), (h, h, -3),
+        (20, 0, 0), (20, 0, 3), (20, 0, -3),
+        (h, -h, 0), (h, -h, 3), (h, -h, -3),
+
+        (0, 20, 0), (0, 20, 3), (0, 20, -3),
+        # (0, 0, 0),
+        (0, 0, 3), (0, 0, -3),
+        (0, -20, 0), (0, -20, 3), (0, -20, -3),
+
+        (-h, h, 0), (-h, h, 3), (-h, h, -3),
+        (-20, 0, 0), (-20, 0, 3), (-20, 0, -3),
+        (-h, -h, 0), (-h, -h, 3), (-h, -h, -3),
+    ]
+    return directions
+
+
+def get_neighbors_baseline_path(node, end_node):
+    directions = get_directions_baseline_path()
+    neighbors = []
+
+    # if next to goal
+    if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20:
+        neighbors.append(end_node)
+
+    else:
+        for dist_x, dist_y, dist_z in directions:
+            new_x = node.x + dist_x
+            new_y = node.y + dist_y
+            new_z = node.z + dist_z
+            new_node = Node(new_x, new_y, new_z)
+            neighbors.append(new_node)
+    return neighbors
+
+
+def get_neighbors_optimal_path(node, workspace):
+    neighbors = []
+    start_node = workspace.mission.start
+    end_node = workspace.mission.end
+    directions = get_directions_optimal_path()
+
+    # if next to goal
+    if distance_h(end_node, node) <= 20 and distance_v(end_node,
+                                                       node) <= 3 and collision_detection.check_segment_intersects_blockages(
+        [node.x, end_node.x], [node.y, end_node.y], [node.z, end_node.z], workspace.blockages) is False:
+        end_node.velocity = 0
+        end_node.velocity_x = 0
+        end_node.velocity_y = 0
+        end_node.velocity_z = 0
+        neighbors.append(end_node)
+
+        if node == start_node:
+            raise Exception("Start node next to end node")
+
+    else:
+        for dist_x, dist_y, dist_z in directions:
+            new_x = node.x + dist_x
+            new_y = node.y + dist_y
+            new_z = node.z + dist_z
+            new_node = Node(new_x, new_y, new_z)
+            if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
+                                                                      [node.z, new_z],
+                                                                      workspace.blockages) is False and new_z > 0 and new_y >= 0 and new_x >= 0:
+                neighbors.append(new_node)
+    return neighbors
+
+
+def find_baseline_path(workspace):
+    mission = workspace.mission
+    start_node = mission.start
+    end_node = mission.end
 
     def heuristic_distance(node):
         return distance_h(node, end_node)
 
-    def get_neighbors(node):
-        neighbors = []
-
-        # if next to goal
-        if math.sqrt((node.x - end_node.x) ** 2 + (node.y - end_node.y) ** 2) <= 20:
-            neighbors.append(end_node)
-
-        else:
-            for dist_x, dist_y, dist_z in directions:
-                new_x = node.x + dist_x
-                new_y = node.y + dist_y
-                new_z = node.z + dist_z
-                new_node = Node(new_x, new_y, new_z)
-                neighbors.append(new_node)
-        return neighbors
-
     pq = [(0, start_node)]
-
     visited = {start_node: 0}
     predecessor = {}
 
@@ -187,7 +233,7 @@ def find_baseline_path(workspace, mission):
         if current == end_node:
             break
 
-        for neighbor in get_neighbors(current):
+        for neighbor in get_neighbors_baseline_path(current, end_node):
             # Calculate tentative distance through current node
             tentative_distance = visited[current] + distance_h(current, neighbor)
             # If the tentative distance is less than the recorded distance to the neighbor, update it
@@ -206,7 +252,6 @@ def find_baseline_path(workspace, mission):
     xs = []
     ys = []
     zs = []
-
     z_target = 0
 
     for point in path:
@@ -221,10 +266,9 @@ def find_baseline_path(workspace, mission):
 
         segments_intersects = collision_detection.check_segment_intersects_blockages(x_pair, y_pair, z_pair,
                                                                                      workspace.blockages)
-
         if segments_intersects:
             new_z_target = pathfinding.collision_detection.find_max_intersection_z(x_pair, y_pair, z_pair,
-                                                                               workspace.blockages)
+                                                                                   workspace.blockages)
             if new_z_target > z_target:
                 z_target = new_z_target
     baseline_path = []
@@ -244,7 +288,6 @@ def find_baseline_path(workspace, mission):
         print(path_coordinates)
 
         power = 0
-
         previous_node = None
         for node in baseline_path:
             if previous_node is not None and node != end_node:
@@ -255,68 +298,26 @@ def find_baseline_path(workspace, mission):
             previous_node = node
 
         print("POWER: ", power)
-        return EnergyPath(path_coordinates, power)
+        return EnergyPath(path_coordinates, power, path_type='baseline')
     else:
         raise NotImplementedError('The baseline path is too high for the workspace')
 
 
-def find_optimal_path(workspace, mission):
+def find_optimal_path(workspace):
+    mission = workspace.mission
     start_time = time.time()
     print('Finding optimal path...')
     start_node = mission.start
     end_node = mission.end
 
-    h = 10 * math.sqrt(2)
-    directions = [
-        (h, h, 0), (h, h, 3), (h, h, -3),
-        (20, 0, 0), (20, 0, 3), (20, 0, -3),
-        (h, -h, 0), (h, -h, 3), (h, -h, -3),
-
-        (0, 20, 0), (0, 20, 3), (0, 20, -3),
-        # (0, 0, 0),
-        (0, 0, 3), (0, 0, -3),
-        (0, -20, 0), (0, -20, 3), (0, -20, -3),
-
-        (-h, h, 0), (-h, h, 3), (-h, h, -3),
-        (-20, 0, 0), (-20, 0, 3), (-20, 0, -3),
-        (-h, -h, 0), (-h, -h, 3), (-h, -h, -3),
-    ]
     # 4, 6, 8, 10, 12
     velocities = (10, 12)
-
-    def get_neighbors(node):
-        neighbors = []
-
-        # if next to goal
-        if distance_h(end_node, node) <= 20 and distance_v(end_node,
-                                                           node) <= 3 and collision_detection.check_segment_intersects_blockages(
-            [node.x, end_node.x], [node.y, end_node.y], [node.z, end_node.z], workspace.blockages) is False:
-            end_node.velocity = 0
-            end_node.velocity_x = 0
-            end_node.velocity_y = 0
-            end_node.velocity_z = 0
-            neighbors.append(end_node)
-
-            if node == start_node:
-                raise Exception("Start node next to end node")
-
-        else:
-            for dist_x, dist_y, dist_z in directions:
-                new_x = node.x + dist_x
-                new_y = node.y + dist_y
-                new_z = node.z + dist_z
-                new_node = Node(new_x, new_y, new_z)
-                if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
-                                                                          [node.z, new_z],
-                                                                          workspace.blockages) is False and new_z > 0 and new_y >= 0 and new_x >= 0:
-                    neighbors.append(new_node)
-        return neighbors
-
     pq = [(0, start_node)]
 
     visited = {start_node: 0}
     predecessor = {}
 
+    # pq_count = 0
     while pq:
         _, current = heapq.heappop(pq)
 
@@ -324,7 +325,7 @@ def find_optimal_path(workspace, mission):
             break
 
         try:
-            for neighbor in get_neighbors(current):
+            for neighbor in get_neighbors_optimal_path(current, workspace):
                 for velocity in velocities:
                     neighbor.velocity = velocity
                     c_cost = visited[current]  # current cost
@@ -343,6 +344,8 @@ def find_optimal_path(workspace, mission):
                         # print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
 
                         heapq.heappush(pq, (a_cost, neighbor))  # absolute cost is used for pq
+                        # pq_count += 1
+                        # print('Priority Queue Count: ', pq_count)
         except Exception as e:
             raise IOError(f'An error ocurred: {e}')
 
@@ -355,9 +358,7 @@ def find_optimal_path(workspace, mission):
     path.reverse()
 
     path_coordinates = [(node.x, node.y, node.z) for node in path]
-
     print(path_coordinates)
-
     power = a_cost
 
     for node in path:
@@ -375,4 +376,4 @@ def find_optimal_path(workspace, mission):
     elapsed_time = end_time - start_time
     print("time for optimal path: ", elapsed_time)
 
-    return EnergyPath(path_coordinates, power)
+    return EnergyPath(path_coordinates, power, path_type='optimal')

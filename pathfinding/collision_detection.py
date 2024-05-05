@@ -108,5 +108,4 @@ def find_max_intersection_z(xs, ys, zs, blockages):
             intersection_height = find_intersection_height(start, end, block_position,
                                                            (block_size_x, block_size_y, block_size_z))
             max_z_intersection = max(max_z_intersection, intersection_height)
-
     return max_z_intersection
