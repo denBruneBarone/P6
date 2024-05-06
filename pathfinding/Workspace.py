@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 import numpy as np
+
 from pathfinding import collision_detection
 
 
 class Workspace:
     def __init__(self, dimensions, max_bounds, mission):
+        self.wind = None
         self.dimensions = dimensions
         self.max_bounds = max_bounds
         self.flight_paths = []
@@ -29,6 +31,21 @@ class Workspace:
 
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)
+
+
+    def set_wind(self, wind_direction_degrees, wind_speed):
+        self.wind = {'direction': wind_direction_degrees, 'speed': wind_speed}
+
+
+    def simulate_wind_effect(self):
+        if self.wind:
+            # Implement wind effect simulation here
+            wind_direction_rad = np.radians(self.wind['direction'])
+            wind_speed = self.wind['speed']
+            print(f"Simulating wind with direction {self.wind['direction']} degrees and speed {self.wind['speed']} units/s")
+        else:
+            print("No wind set for simulation")
+
 
     def plot_flight_paths(self, ax, dimension):
         def plot_segment(segment_x_coords, segment_y_coords, segment_z_coords, segment_color):
@@ -97,7 +114,7 @@ class Workspace:
             ax = self.plot_blockages(ax, dimension='2D')
 
             # Plot optional wind
-            if show_wind:
+            if show_wind and self.wind:
                 ax = self.plot_wind(ax)
 
             ax = self.plot_flight_paths(ax, dimension='2D')
@@ -110,6 +127,63 @@ class Workspace:
             ax.set_aspect('equal', adjustable='box')
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
+
+    def plot_wind(self, ax):
+        if self.wind:
+            wind_direction_rad = np.radians(self.wind['direction'])
+            wind_speed = self.wind['speed']
+
+            # Calculate the maximum dimension of the workspace
+            max_dimension = max(self.max_bounds)
+
+            # Define the spacing between arrows (you can adjust this for your visualization)
+            arrow_spacing = max_dimension / 30  # Adjust as needed
+
+            # Create a grid of points where arrows will be placed
+            x_coords = np.arange(0, self.max_bounds[0], arrow_spacing)
+            y_coords = np.arange(0, self.max_bounds[1], arrow_spacing)
+            X, Y = np.meshgrid(x_coords, y_coords)
+
+            # Calculate the components of the arrow based on wind direction and speed
+            U = wind_speed * np.cos(wind_direction_rad)
+            V = wind_speed * np.sin(wind_direction_rad)
+
+            # Iterate over each grid point and check for blockages in the line of sight of the wind
+            for x, y in zip(X.flatten(), Y.flatten()):
+                # Check if there's a blockage in the line of sight of the wind
+                if not self.check_blockage_in_line_of_sight(x, y, wind_direction_rad):
+                    # Plot the wind arrow at the current grid point
+                    ax.quiver(x, y, U, V, angles='xy', scale_units='xy', scale=1, color='blue')
+
+            if ax is None:
+                fig, ax = plt.subplots()  # Initialize ax if it's None
+
+            # Set labels and limits
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+            ax.set_xlim([0, self.max_bounds[0]])
+            ax.set_ylim([0, self.max_bounds[1]])
+            ax.set_aspect('equal', adjustable='box')
+
+        else:
+            print("No wind set for simulation")
+
+        return ax
+
+    def check_blockage_in_line_of_sight(self, x, y, wind_direction_rad):
+        # Iterate over each blockage and check if it obstructs the line of sight of the wind
+        for blockage in self.blockages:
+            # Calculate the angle of the line connecting the current point to the blockage
+            angle_to_blockage = np.arctan2(blockage.positions[1] - y, blockage.positions[0] - x)
+
+            # Calculate the angle difference between the wind direction and the angle to the blockage
+            angle_difference = np.abs(wind_direction_rad - angle_to_blockage)
+
+            # If the angle difference is within a threshold, the blockage obstructs the line of sight
+            if angle_difference < np.pi / 2:  # Adjust the threshold as needed
+                return True
+
+        return False
 
     def plot_blockages(self, ax, dimension):
         if dimension == '3D':
