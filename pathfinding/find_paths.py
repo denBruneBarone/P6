@@ -11,7 +11,7 @@ from pathfinding.EnergyPath import EnergyPath
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 # Define the path for saving/loading the model
-MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/best_model.pkl")
+MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/trained_model.pkl")
 
 
 def load_model(file_path):
@@ -126,6 +126,22 @@ def heuristic_power(current_node, next_node, mission, is_heuristic=False):
     power_joule = power_watt * time
 
     return power_joule
+
+def check_model():
+    input_array = [[0, 1, 0,  # time, wind_speed, wind_angle
+                    0, 0, 5,  # postions
+                    0, 0, 1,  # velocities
+                    0, 0, 0,  # accelerations
+                    0  # payloads
+                    ]]
+
+    target_labels = ml_model.predict(input_array)
+    print(target_labels)
+
+    return target_labels
+
+check_model()
+
 
 
 def distance_h(node1, node2):
