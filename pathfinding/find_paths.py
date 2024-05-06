@@ -223,6 +223,7 @@ def find_baseline_path(workspace):
     def heuristic_distance(node):
         return distance_h(node, end_node)
 
+    # Priority Queue: For keeping track of nodes to be explored next
     pq = [(0, start_node)]
     visited = {start_node: 0}
     predecessor = {}
@@ -237,6 +238,7 @@ def find_baseline_path(workspace):
             # Calculate tentative distance through current node
             tentative_distance = visited[current] + distance_h(current, neighbor)
             # If the tentative distance is less than the recorded distance to the neighbor, update it
+            # Find the shortest path.
             if neighbor not in visited or tentative_distance < visited[neighbor]:
                 visited[neighbor] = tentative_distance
                 heapq.heappush(pq, (tentative_distance + heuristic_distance(neighbor), neighbor))
@@ -244,6 +246,8 @@ def find_baseline_path(workspace):
 
     path = []
     current = end_node
+    # Using the predecessor dictionary to build the path
+    # The while loop traverses as long as the current node has a predecessor
     while current in predecessor:
         path.insert(0, current)
         current = predecessor[current]
@@ -254,18 +258,22 @@ def find_baseline_path(workspace):
     zs = []
     z_target = 0
 
+    # Converting the path to x,y,z coordinates.
     for point in path:
         xs.append(point.x)
         ys.append(point.y)
         zs.append(point.z)
 
+    # Iterating through and converting the x,y,z coordinates to pairs.
     for i in range(len(xs) - 1):
         x_pair = [xs[i], xs[i + 1]]
         y_pair = [ys[i], ys[i + 1]]
         z_pair = [zs[i], zs[i + 1]]
 
+        # Checking if each pairs of coordinates intersect with any blockages.
         segments_intersects = collision_detection.check_segment_intersects_blockages(x_pair, y_pair, z_pair,
                                                                                      workspace.blockages)
+        # If any intersections is found, we store the height of the highest intersecting blockage as z_target.
         if segments_intersects:
             new_z_target = pathfinding.collision_detection.find_max_intersection_z(x_pair, y_pair, z_pair,
                                                                                    workspace.blockages)
@@ -274,12 +282,15 @@ def find_baseline_path(workspace):
     baseline_path = []
     clearance_height = 3
 
-    if z_target + clearance_height <= workspace.max_bounds[2]:
+    # We check that the z_target and a given clearance height is within the bounds of the workspace.
+    desired_height = z_target + clearance_height
+    if desired_height <= workspace.max_bounds[2]:
         baseline_path.append(start_node)
+
+        # For each coordinate in the path, we create Nodes with the desired height.
         for coordinate in path:
             if coordinate != end_node:
-                new_coordinate = Node(coordinate.x, coordinate.y,
-                                      z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+                new_coordinate = Node(coordinate.x, coordinate.y, desired_height)
                 baseline_path.append(new_coordinate)
             else:
                 baseline_path.append(end_node)
@@ -290,7 +301,9 @@ def find_baseline_path(workspace):
         power = 0
         previous_node = None
         for node in baseline_path:
+            # Power is calculated for each node.
             if previous_node is not None and node != end_node:
+                # Velocity is set if we are not at the start or end node.
                 node.velocity = 12
                 power += heuristic_power(previous_node, node, mission)
             elif node == end_node:
