@@ -28,7 +28,7 @@ def setup_workspace(mission):
     blockage_matrix_7 = Blockage(100, 35, 10, 110, 310, 0, 'obstacle')
     space.add_blockage(blockage_matrix_7)
 
-    space.set_wind(wind_direction_degrees=60, wind_speed=10)
+    space.set_wind(wind_direction=90, wind_speed=10)
 
     # Add Windfield
     # space.add_wind_field(45, 10)
@@ -42,17 +42,17 @@ def find_and_show_optimal_path():
 
     workspace = setup_workspace(mission)
 
-    workspace.simulate_wind_effect()
+    #workspace.simulate_wind_effect()
 
-    flight_optimal = find_optimal_path(workspace)
+    #flight_optimal = find_optimal_path(workspace)
     flight_baseline = find_baseline_path(workspace)
-    print_stats(flight_optimal, flight_baseline)
+    #print_stats(flight_optimal, flight_baseline)
 
     workspace.add_flight_path(flight_path=flight_baseline)
-    workspace.add_flight_path(flight_path=flight_optimal)
+    #workspace.add_flight_path(flight_path=flight_optimal)
 
     workspace.plot_space(dimension='2D', dpi=800, show_wind=True)
-    workspace.plot_space(dimension='3D', dpi=800)
+    #workspace.plot_space(dimension='3D', dpi=800)
 
 
 def print_stats(flight_optimal, flight_baseline):

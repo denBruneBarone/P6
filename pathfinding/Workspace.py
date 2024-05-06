@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 import numpy as np
 
-from pathfinding import collision_detection
+from pathfinding import collision_detection, Blockage
 
 
 class Workspace:
@@ -13,10 +13,11 @@ class Workspace:
         self.flight_paths = []
         self.blockages = []
         self.wind_field = []
-        self.wind_angle_rad = 0
+        self.wind_angle_rad = np.radians(90)
         self.wind_angle = 0
         self.grid_size = 100
         self.mission = mission
+        self.wind_blocks = []
 
     def add_blockage(self, blockage):
         if len(blockage.np_array.shape) != self.dimensions:
@@ -26,25 +27,67 @@ class Workspace:
                 raise ValueError(f"Blockage position must be within the specified bounds")
             if blockage.positions[i] + blockage.np_array.shape[i] > self.max_bounds[i]:
                 raise ValueError(f"Blockage does not fit within the space dimensions")
-        self.blockages.append(blockage)
+        if blockage.type == 'wind':
+            self.wind_blocks.append(blockage)
+        else:
+            self.blockages.append(blockage)
         # print(self.blockages)
 
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)
 
+    def wind_blockage(self, wind_block):
+        #pos_x, pos_y, size_x, size_y
+        wind_block_list = [
+            [360, 0, 320, 370],
+            [190, 0, 100, 150]
+        ]
+        self.wind_blocks.append(wind_block_list)
 
-    def set_wind(self, wind_direction_degrees, wind_speed):
-        self.wind = {'direction': wind_direction_degrees, 'speed': wind_speed}
+    def set_wind(self, wind_direction, wind_speed):
+        self.wind_angle_rad = np.radians(90 - wind_direction)  # Adjusting for 0 being south
+        self.wind_angle = wind_direction
+        wind_speed_grid = np.ones((self.max_bounds[0], self.max_bounds[1]))
 
+        wind_blockage_list = [
+            [40, 80, 320, 290],
+            [90, 50, 100, 100],
+            [40, 80, 300, 50],
+            [40, 35, 260, 95],
+            [40, 95, 55, 185],
+            [100, 35, 175, 200],
+            [100, 35, 110, 310],
+        ]
 
-    def simulate_wind_effect(self):
-        if self.wind:
-            # Implement wind effect simulation here
-            wind_direction_rad = np.radians(self.wind['direction'])
-            wind_speed = self.wind['speed']
-            print(f"Simulating wind with direction {self.wind['direction']} degrees and speed {self.wind['speed']} units/s")
-        else:
-            print("No wind set for simulation")
+        for wind_block in wind_blockage_list:
+            if 315 < wind_direction or wind_direction <= 45:
+                start_x = wind_block[2]
+                start_y = wind_block[1] - wind_block[1]
+                end_x = wind_block[0] + start_x
+                end_y = wind_block[3] + wind_block[1]
+
+                for i in range(start_x, end_x):
+                    for j in range(start_y, end_y):
+                        wind_speed_grid[j, i] = 0
+
+            elif 45 < wind_direction <= 135:
+                start_x = wind_block[2] - wind_block[2]
+                start_y = wind_block[3]
+                end_x = wind_block[0] + wind_block[2]
+                end_y = wind_block[1] + start_y
+
+                for i in range(start_x, end_x):
+                    for j in range(start_y, end_y):
+                        wind_speed_grid[j, i] = 0
+
+        for i in range(wind_speed_grid.shape[0]):
+            for j in range(wind_speed_grid.shape[1]):
+                if wind_speed_grid[i, j] == 1:
+                    wind_speed_grid[i, j] = wind_speed
+                j += 1
+            i += 1
+        self.wind_field = wind_speed_grid
+
 
 
     def plot_flight_paths(self, ax, dimension):
@@ -113,11 +156,8 @@ class Workspace:
             # Plot blockages
             ax = self.plot_blockages(ax, dimension='2D')
 
-            # Plot optional wind
-            if show_wind and self.wind:
+            if show_wind:
                 ax = self.plot_wind(ax)
-
-            ax = self.plot_flight_paths(ax, dimension='2D')
 
             # Set labels and limits
             ax.set_xlabel('X')
@@ -128,47 +168,7 @@ class Workspace:
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
-    def plot_wind(self, ax):
-        if self.wind:
-            wind_direction_rad = np.radians(self.wind['direction'])
-            wind_speed = self.wind['speed']
 
-            # Calculate the maximum dimension of the workspace
-            max_dimension = max(self.max_bounds)
-
-            # Define the spacing between arrows (you can adjust this for your visualization)
-            arrow_spacing = max_dimension / 30  # Adjust as needed
-
-            # Create a grid of points where arrows will be placed
-            x_coords = np.arange(0, self.max_bounds[0], arrow_spacing)
-            y_coords = np.arange(0, self.max_bounds[1], arrow_spacing)
-            X, Y = np.meshgrid(x_coords, y_coords)
-
-            # Calculate the components of the arrow based on wind direction and speed
-            U = wind_speed * np.cos(wind_direction_rad)
-            V = wind_speed * np.sin(wind_direction_rad)
-
-            # Iterate over each grid point and check for blockages in the line of sight of the wind
-            for x, y in zip(X.flatten(), Y.flatten()):
-                # Check if there's a blockage in the line of sight of the wind
-                if not self.check_blockage_in_line_of_sight(x, y, wind_direction_rad):
-                    # Plot the wind arrow at the current grid point
-                    ax.quiver(x, y, U, V, angles='xy', scale_units='xy', scale=1, color='blue')
-
-            if ax is None:
-                fig, ax = plt.subplots()  # Initialize ax if it's None
-
-            # Set labels and limits
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
-            ax.set_xlim([0, self.max_bounds[0]])
-            ax.set_ylim([0, self.max_bounds[1]])
-            ax.set_aspect('equal', adjustable='box')
-
-        else:
-            print("No wind set for simulation")
-
-        return ax
 
     def check_blockage_in_line_of_sight(self, x, y, wind_direction_rad):
         # Iterate over each blockage and check if it obstructs the line of sight of the wind
@@ -197,6 +197,26 @@ class Workspace:
                 ax.add_patch(
                     plt.Rectangle((x, y), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[1],
                                   color='k', alpha=0.5))
+
+
+        return ax
+
+    def plot_wind(self, ax):
+        # Plot the wind speed grid with a colormap
+        plt.imshow(self.wind_field, cmap='viridis', origin='lower')
+        plt.colorbar(label='Wind speed')
+        # Plot wind direction arrow
+        # Calculate the endpoint of the arrow
+        arrow_length = self.max_bounds[0] / 10
+
+        arrow_end_x = self.max_bounds[0] / 2 + arrow_length * np.cos(self.wind_angle_rad)
+        arrow_end_y = self.max_bounds[1] / 2 + arrow_length * np.sin(self.wind_angle_rad)
+
+        ax.annotate('',
+                    xy=(self.max_bounds[0] / 2, self.max_bounds[1] / 2),
+                    xytext=(arrow_end_x, arrow_end_y),
+                    arrowprops=dict(facecolor='blue', edgecolor='blue', alpha=0.4,
+                                    path_effects=[path_effects.withSimplePatchShadow(offset=(-1, -1))]))
         return ax
 
     # def add_wind_field(self, angle, wind_speed):
