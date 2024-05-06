@@ -5,8 +5,10 @@ import pathfinding.collision_detection
 import heapq
 import math
 from pathfinding import collision_detection
+from pathfinding.Mission import Mission
 from pathfinding.Node import Node
 from pathfinding.EnergyPath import EnergyPath
+from pathfinding.Workspace import Workspace
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 # Define the path for saving/loading the model
@@ -21,6 +23,31 @@ def load_model(file_path):
 
 # Load the model
 ml_model = load_model(MODEL_FILE_PATH)
+
+
+def validate_workspace(workspace):
+    if not isinstance(workspace, Workspace):
+        raise ValueError("Invalid workspace input. Expected instance of Workspace class.")
+
+
+def validate_mission(mission):
+    if not isinstance(mission, Mission):
+        raise ValueError("Invalid mission input. Expected instance of Mission class.")
+
+    if not hasattr(mission, 'start') or not hasattr(mission, 'end'):
+        raise ValueError("Mission must contain start and end nodes.")
+
+
+def is_within_bounds(workspace, node):
+    max_x, max_y, max_z = workspace.max_bounds
+    return (0 <= node.x <= max_x) and \
+           (0 <= node.y <= max_y) and \
+           (0 <= node.z <= max_z)
+
+
+def check_node_bounds(workspace, node):
+    if not is_within_bounds(workspace, node):
+        raise ValueError("Node is out of bounds.")
 
 
 def power(target_labels):
@@ -220,6 +247,12 @@ def find_baseline_path(workspace):
     start_node = mission.start
     end_node = mission.end
 
+    validate_workspace(workspace)
+    validate_mission(mission)
+
+    check_node_bounds(workspace, start_node)
+    check_node_bounds(workspace, end_node)
+
     def heuristic_distance(node):
         return distance_h(node, end_node)
 
@@ -322,6 +355,12 @@ def find_optimal_path(workspace):
     print('Finding optimal path...')
     start_node = mission.start
     end_node = mission.end
+
+    validate_workspace(workspace)
+    validate_mission(mission)
+
+    check_node_bounds(workspace, start_node)
+    check_node_bounds(workspace, end_node)
 
     # 4, 6, 8, 10, 12
     velocities = (10, 12)
