@@ -17,7 +17,6 @@ class Workspace:
         self.wind_angle = 0
         self.grid_size = 100
         self.mission = mission
-        self.wind_blocks = []
 
     def add_blockage(self, blockage):
         if len(blockage.np_array.shape) != self.dimensions:
@@ -27,22 +26,10 @@ class Workspace:
                 raise ValueError(f"Blockage position must be within the specified bounds")
             if blockage.positions[i] + blockage.np_array.shape[i] > self.max_bounds[i]:
                 raise ValueError(f"Blockage does not fit within the space dimensions")
-        if blockage.type == 'wind':
-            self.wind_blocks.append(blockage)
-        else:
-            self.blockages.append(blockage)
-        # print(self.blockages)
+        self.blockages.append(blockage)
 
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)
-
-    def wind_blockage(self, wind_block):
-        #pos_x, pos_y, size_x, size_y
-        wind_block_list = [
-            [360, 0, 320, 370],
-            [190, 0, 100, 150]
-        ]
-        self.wind_blocks.append(wind_block_list)
 
     def set_wind(self, wind_direction, wind_speed):
         self.wind_angle_rad = np.radians(90 - wind_direction)  # Adjusting for 0 being south
@@ -66,19 +53,26 @@ class Workspace:
                 end_x = wind_block[0] + start_x
                 end_y = wind_block[3] + wind_block[1]
 
-                for i in range(start_x, end_x):
-                    for j in range(start_y, end_y):
-                        wind_speed_grid[j, i] = 0
-
             elif 45 < wind_direction <= 135:
                 start_x = wind_block[2] - wind_block[2]
                 start_y = wind_block[3]
                 end_x = wind_block[0] + wind_block[2]
                 end_y = wind_block[1] + start_y
 
-                for i in range(start_x, end_x):
-                    for j in range(start_y, end_y):
-                        wind_speed_grid[j, i] = 0
+            elif 135 < wind_direction <= 225:
+                start_x = wind_block[2]
+                start_y = wind_block[3]
+                end_x = wind_block[0] + start_x
+                end_y = self.max_bounds[1]
+            else: # 225 < wind_direction <= 315
+                start_x = wind_block[2]
+                start_y = wind_block[3]
+                end_x = self.max_bounds[0]
+                end_y = wind_block[1] + start_y
+
+            for i in range(start_x, end_x):
+                for j in range(start_y, end_y):
+                    wind_speed_grid[j, i] = 0
 
         for i in range(wind_speed_grid.shape[0]):
             for j in range(wind_speed_grid.shape[1]):
@@ -87,8 +81,6 @@ class Workspace:
                 j += 1
             i += 1
         self.wind_field = wind_speed_grid
-
-
 
     def plot_flight_paths(self, ax, dimension):
         def plot_segment(segment_x_coords, segment_y_coords, segment_z_coords, segment_color):
@@ -122,7 +114,6 @@ class Workspace:
                 segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords,
                                                                                             z_coords,
                                                                                             self.blockages)
-
                 if segment_intersects:
                     plot_segment(x_coords, y_coords, z_coords, segment_color='r')
                 else:
@@ -197,8 +188,6 @@ class Workspace:
                 ax.add_patch(
                     plt.Rectangle((x, y), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[1],
                                   color='k', alpha=0.5))
-
-
         return ax
 
     def plot_wind(self, ax):
@@ -218,174 +207,3 @@ class Workspace:
                     arrowprops=dict(facecolor='blue', edgecolor='blue', alpha=0.4,
                                     path_effects=[path_effects.withSimplePatchShadow(offset=(-1, -1))]))
         return ax
-
-    # def add_wind_field(self, angle, wind_speed):
-    #     # Convert wind angle to radians
-    #     self.wind_angle_rad = np.radians(angle)
-    #     self.wind_angle = angle
-    #
-    #     # Initialize wind speed grid
-    #     wind_speed_grid = np.zeros((self.max_bounds[0], self.max_bounds[1]))
-    #
-    #     # These are built around how the wind affects our workspace from outside.
-    #
-    #     # Determine the starting point and direction based on the wind angle
-    #     if 0 <= angle < 90:
-    #         start_point = [self.max_bounds[0] - 1, self.max_bounds[1] - 1]  # Wind comes from the top-right corner
-    #         end_point = [self.max_bounds[0] - self.max_bounds[0], self.max_bounds[1] - self.max_bounds[1]]
-    #         x_step = -1
-    #         y_step = -1
-    #     elif 90 <= angle < 180:
-    #         start_point = [self.max_bounds[0] - self.max_bounds[0],
-    #                        self.max_bounds[1] - 1]  # Wind comes from the top-left corner
-    #         end_point = [self.max_bounds[0] - 1, self.max_bounds[1] - self.max_bounds[1]]
-    #
-    #         x_step = 1
-    #         y_step = -1
-    #
-    #     elif 180 <= angle < 270:
-    #         start_point = [self.max_bounds[0] - self.max_bounds[0],
-    #                        self.max_bounds[1] - self.max_bounds[1]]  # Wind comes from the bottom-left corner
-    #         end_point = [self.max_bounds[0] - 1, self.max_bounds[1] - 1]
-    #
-    #         x_step = 1
-    #         y_step = 1
-    #     else:
-    #         start_point = [self.max_bounds[0] - 1,
-    #                        self.max_bounds[1] - self.max_bounds[1]]  # Wind comes from the bottom-right corner
-    #         end_point = [self.max_bounds[0] - self.max_bounds[0], self.max_bounds[1] - 1]
-    #
-    #         x_step = -1
-    #         y_step = 1
-    #
-    #     # Cast rays from the starting point until reaching the bounds or hitting a blockage
-    #     x, y = start_point
-    #
-    #     while 0 <= x < self.max_bounds[0] and 0 <= y < self.max_bounds[1]:
-    #         # Check for blockages at the current point
-    #
-    #         # print("Current position:", x, y)  # Print current position
-    #
-    #         for i in range(start_point[0], end_point[0] + x_step, x_step):
-    #             xs = [start_point[0], x + x_step]
-    #
-    #             for j in range(start_point[1], end_point[1] + y_step, y_step):
-    #                 ys = [start_point[1], y + y_step]
-    #
-    #                 # print("Segment coordinates:", xs, ys)  # Print segment coordinates
-    #
-    #                 if not collision_detection.check_segment_intersects_blockages(xs, ys, [0, 0], self.blockages):
-    #                     # Store the wind speed in the grid
-    #                     wind_speed_grid[x, y] = wind_speed
-    #                 else:
-    #                     # If there is a blockage, stop casting the ray
-    #                     # print('Found a blockage')
-    #                     pass
-    #
-    #                 # Move to the next grid cell along the ray direction
-    #                 y += y_step
-    #             y = start_point[1]
-    #             x += x_step
-    #
-    #     self.wind_field = self.rotate_wind_grid(wind_speed_grid)
-    #
-    # def rotate_wind_grid(self, wind_speed_grid):
-    #     # Calculate the rotation angle based on the wind angle
-    #     rotation_angle = self.wind_angle % 360  # Ensure angle is within [0, 360)
-    #
-    #     if 0 <= rotation_angle < 90:  # Wind comes from the top-right corner
-    #         k = 0
-    #
-    #     elif 90 <= rotation_angle < 180:  # Wind comes from the top-left corner
-    #         k = 2
-    #         # wind_speed_grid = np.flip(wind_speed_grid, axis=0)
-    #
-    #     elif 180 <= rotation_angle < 270:  # Wind comes from the bottom-left corner
-    #         k = 0
-    #
-    #     else:  # Wind comes from the bottom-right corner
-    #         k = -2
-    #         # wind_speed_grid = np.flip(wind_speed_grid, axis=1)
-    #
-    #     rotated_wind_speed_grid = np.rot90(wind_speed_grid, k=k, axes=(0, 1))
-    #
-    #     return rotated_wind_speed_grid
-    #
-    # def plot_wind(self, ax):
-    #     grid_color = 'white'
-    #     # Plot the wind speed grid with a colormap
-    #     plt.imshow(self.wind_field, cmap='viridis', origin='lower',
-    #                extent=[0, self.max_bounds[0], 0, self.max_bounds[1]])
-    #     plt.colorbar(label='Wind speed')
-    #
-    #     # Plot wind direction arrow
-    #     # Calculate the endpoint of the arrow
-    #     arrow_length = self.max_bounds[0] / 10
-    #
-    #     arrow_end_x = self.max_bounds[0] / 2 + arrow_length * np.cos(self.wind_angle_rad)
-    #     arrow_end_y = self.max_bounds[1] / 2 + arrow_length * np.sin(self.wind_angle_rad)
-    #
-    #     ax.annotate('',
-    #                 xy=(self.max_bounds[0] / 2, self.max_bounds[1] / 2),
-    #                 xytext=(arrow_end_x, arrow_end_y),
-    #                 arrowprops=dict(facecolor='blue', edgecolor='blue', alpha=0.4,
-    #                                 path_effects=[path_effects.withSimplePatchShadow(offset=(-1, -1))]))
-    #     return ax
-
-    # # For testing collision detection
-    # def generate_random_path(self):
-    #     # Access blockages directly from the workspace
-    #     blockages = self.blockages
-    #
-    #     # Generate random flight path data
-    #     num_points = 50  # Number of points in the flight path
-    #     min_coord, max_coord = 0, 400  # Range for coordinates in each dimension of x and z
-    #     min_coord_z, max_coord_z = 0, 60
-    #
-    #     # Generate random x, y, z coordinates for the flight path while avoiding blockages
-    #     flight_path = []
-    #     for _ in range(num_points):
-    #         # Generate random coordinates
-    #         x_coord = np.random.randint(min_coord, max_coord)
-    #         y_coord = np.random.randint(min_coord, max_coord)
-    #         z_coord = np.random.randint(min_coord_z, max_coord_z)  # Adjusted for z-axis (height)
-    #         print(f"Generated coordinates: ({x_coord}, {y_coord}, {z_coord})")
-    #
-    #         # Check if the generated coordinates are within any blockages
-    #         while any(
-    #                 blockage[1][0] <= x_coord < blockage[1][0] + blockage[0].shape[0] and
-    #                 blockage[1][1] <= y_coord < blockage[1][1] + blockage[0].shape[1] and
-    #                 blockage[1][2] <= z_coord < blockage[1][2] + blockage[0].shape[2]
-    #                 for blockage in blockages
-    #         ):
-    #             # Regenerate coordinates until they are outside all blockages
-    #             x_coord = np.random.randint(min_coord, max_coord)
-    #             y_coord = np.random.randint(min_coord, max_coord)
-    #             z_coord = np.random.randint(min_coord, max_coord // 4)
-    #
-    #             print(f"Regenerated coordinates: ({x_coord}, {y_coord}, {z_coord})")
-    #
-    #         # Append the valid coordinates to the flight path
-    #         flight_path.append((x_coord, y_coord, z_coord))
-    #
-    #     return flight_path
-    #
-    # # For testing collision detection
-    # @staticmethod
-    # def generate_path_completely_fill_blockage(grid_size=400, blockage_size=50, blockage_x=250, blockage_y=250):
-    #     path = []
-    #
-    #     # Moving along the top boundary
-    #     for x in range(0, grid_size):
-    #         path.append((x, 0, 0))
-    #
-    #     # Zigzag pattern towards the blockage from the top
-    #     for y in range(1, grid_size):
-    #         if y % 2 == 1:  # Odd rows move right
-    #             for x in range(grid_size - 1, -1, -1):
-    #                 path.append((x, y, 0))
-    #         else:  # Even rows move left
-    #             for x in range(0, grid_size):
-    #                 path.append((x, y, 0))
-    #
-    #     return path
