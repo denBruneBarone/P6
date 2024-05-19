@@ -26,9 +26,6 @@ class Workspace:
                 raise ValueError(f"Blockage position must be within the specified bounds")
             if blockage.positions[i] + blockage.np_array.shape[i] > self.max_bounds[i]:
                 raise ValueError(f"Blockage does not fit within the space dimensions")
-        if blockage.type == 'wind':
-            self.wind = blockage
-        else:
             self.blockages.append(blockage)
 
     def add_flight_path(self, flight_path):
@@ -40,7 +37,7 @@ class Workspace:
         wind_speed_grid = np.ones((self.max_bounds[0], self.max_bounds[1], self.max_bounds[2]))
 
         for blockage in self.blockages:
-            if 315 < wind_direction or wind_direction <= 45:
+            if 315 < wind_direction or wind_direction <= 45: # Wind coming from north
                 start_x = blockage.positions[0]
                 start_y = 0
                 start_z = 0
@@ -150,7 +147,6 @@ class Workspace:
             ax = self.plot_blockages(ax, dimension='2D')
 
             if show_wind:
-                print(self.wind_field)
                 ax = self.plot_wind(ax)
 
             # Set labels and limits
@@ -194,13 +190,11 @@ class Workspace:
         return ax
 
     def plot_wind(self, ax):
-        new_list = []
-        for sublist in self.wind_field:
-            new_list.append(sublist[:2])
-
-        # Plot the wind speed grid with a colormap
-        plt.imshow(new_list, cmap='viridis', origin='lower')
+        # Plot the wind speed grid for x and y dimensions
+        wind_field = self.wind_field[:, :, 0]
+        plt.imshow(wind_field, cmap='viridis', origin='lower', alpha=0.5)
         plt.colorbar(label='Wind speed')
+
         # Plot wind direction arrow
         # Calculate the endpoint of the arrow
         arrow_length = self.max_bounds[0] / 10
