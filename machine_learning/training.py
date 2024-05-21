@@ -68,18 +68,22 @@ def extract_features_and_targets(dataset):
 
 
 def concat_1st_axis(list1, list2):
+    # Converting two lists that is array of arrays. To Two list that each is one big array. Like a csv.
     return np.concatenate(list1, axis=0), np.concatenate(list2, axis=0)
 
 
 def train_model(train_data, test_data, use_grid_search):
     grid_search_results = None
     print("Training...")
+
+    # Using __getitem__ method in TrainingDataset to get features and targets
+    training_dataset = TrainingDataset(train_data)
+
+    train_features, train_targets = extract_features_and_targets(training_dataset)
+    train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
+
     if use_grid_search:
         print("Starting Grid Search...")
-        training_dataset = TrainingDataset(train_data)
-
-        train_features, train_targets = extract_features_and_targets(training_dataset)
-        train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
 
         model = DecisionTreeRegressor()
         cv = KFold(n_splits=5, shuffle=True, random_state=42)  # TODO best n_split?
@@ -95,24 +99,17 @@ def train_model(train_data, test_data, use_grid_search):
         grid_search_results = {"score": best_score, "params": dict(best_params)}
 
         model = grid_search.best_estimator_
-
-        model.fit(train_features_np, train_targets_np)
         # TODO: Tilføj print detaljer?
 
     else:
         print("Training without GridSearch...")
-        training_dataset = TrainingDataset(train_data)
 
         # Instantiate the decision tree model with specified hyperparameters
         model = DecisionTreeRegressor(criterion=HPConfig.criterion, max_depth=HPConfig.max_depth,
                                       max_features=HPConfig.max_features, max_leaf_nodes=HPConfig.max_leaf_nodes,
                                       random_state=42)
 
-        train_features, train_targets = extract_features_and_targets(training_dataset)
-        train_features_np, train_targets_np = concat_1st_axis(train_features, train_targets)
-
-        model.fit(train_features_np, train_targets_np)
-
+    model.fit(train_features_np, train_targets_np)
     return evaluate_model(model, test_data, grid_search_results)
 
 

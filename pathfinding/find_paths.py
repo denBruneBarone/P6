@@ -5,8 +5,10 @@ import pathfinding.collision_detection
 import heapq
 import math
 from pathfinding import collision_detection
+from pathfinding.Mission import Mission
 from pathfinding.Node import Node
 from pathfinding.EnergyPath import EnergyPath
+from pathfinding.Workspace import Workspace
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 # Define the path for saving/loading the model
@@ -21,6 +23,31 @@ def load_model(file_path):
 
 # Load the model
 ml_model = load_model(MODEL_FILE_PATH)
+
+
+def validate_workspace(workspace):
+    if not isinstance(workspace, Workspace):
+        raise ValueError("Invalid workspace input. Expected instance of Workspace class.")
+
+
+def validate_mission(mission):
+    if not isinstance(mission, Mission):
+        raise ValueError("Invalid mission input. Expected instance of Mission class.")
+
+    if not hasattr(mission, 'start') or not hasattr(mission, 'end'):
+        raise ValueError("Mission must contain start and end nodes.")
+
+
+def is_within_bounds(workspace, node):
+    max_x, max_y, max_z = workspace.max_bounds
+    return (0 <= node.x <= max_x) and \
+           (0 <= node.y <= max_y) and \
+           (0 <= node.z <= max_z)
+
+
+def check_node_bounds(workspace, node):
+    if not is_within_bounds(workspace, node):
+        raise ValueError("Node is out of bounds.")
 
 
 def power(target_labels):
@@ -108,8 +135,7 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
         time = t1 + t2
 
         if time < 0:
-            # raise ValueError(f"Time is negative for axis {axis} in nodes {current_node} & {next_node}")
-            pass
+            raise ValueError(f"Time is negative for axis {axis} in nodes {current_node} & {next_node}")
         time_axes.append(time)
 
     max_time = max(time_axes)
@@ -126,11 +152,11 @@ def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
 
 
     time = calculate_time(current_node, next_node, mission, is_heuristic)
+    wind_speed = workspace.wind_field[int(current_node.x), int(current_node.y), int(current_node.z)]
+    wind_angle = workspace.wind_angle
 
     if current_node == mission.end:
         return 0
-
-    wind_angle, wind_speed = workspace.wind_field
 
     linear_acceleration_x = next_node.velocity_x / time
     linear_acceleration_y = next_node.velocity_y / time
@@ -247,12 +273,21 @@ def get_neighbors_optimal_path(node, workspace):
 
 def find_baseline_path(workspace):
     mission = workspace.mission
+    wind_speed = workspace.wind_field
+    wind_angle = workspace.wind_angle
     start_node = mission.start
     end_node = mission.end
+
+    validate_workspace(workspace)
+    validate_mission(mission)
+
+    check_node_bounds(workspace, start_node)
+    check_node_bounds(workspace, end_node)
 
     def heuristic_distance(node):
         return distance_h(node, end_node)
 
+    # Priority Queue: For keeping track of nodes to be explored next
     pq = [(0, start_node)]
     visited = {start_node: 0}
     predecessor = {}
@@ -274,6 +309,8 @@ def find_baseline_path(workspace):
 
     path = []
     current = end_node
+    # Using the predecessor dictionary to build the path
+    # The while loop traverses as long as the current node has a predecessor
     while current in predecessor:
         path.insert(0, current)
         current = predecessor[current]
@@ -284,18 +321,22 @@ def find_baseline_path(workspace):
     zs = []
     z_target = 0
 
+    # Converting the path to x,y,z coordinates.
     for point in path:
         xs.append(point.x)
         ys.append(point.y)
         zs.append(point.z)
 
+    # Iterating through and converting the x,y,z coordinates to pairs.
     for i in range(len(xs) - 1):
         x_pair = [xs[i], xs[i + 1]]
         y_pair = [ys[i], ys[i + 1]]
         z_pair = [zs[i], zs[i + 1]]
 
+        # Checking if each pairs of coordinates intersect with any blockages.
         segments_intersects = collision_detection.check_segment_intersects_blockages(x_pair, y_pair, z_pair,
                                                                                      workspace.blockages)
+        # If any intersections is found, we store the height of the highest intersecting blockage as z_target.
         if segments_intersects:
             new_z_target = pathfinding.collision_detection.find_max_intersection_z(x_pair, y_pair, z_pair,
                                                                                    workspace.blockages)
@@ -304,12 +345,15 @@ def find_baseline_path(workspace):
     baseline_path = []
     clearance_height = 3
 
-    if z_target + clearance_height <= workspace.max_bounds[2]:
+    # We check that the z_target and a given clearance height is within the bounds of the workspace.
+    desired_height = z_target + clearance_height
+    if desired_height <= workspace.max_bounds[2]:
         baseline_path.append(start_node)
+
+        # For each coordinate in the path, we create Nodes with the desired height.
         for coordinate in path:
             if coordinate != end_node:
-                new_coordinate = Node(coordinate.x, coordinate.y,
-                                      z_target + clearance_height)  # +5 fordi det ikke ordentligt at flyve præcis i blockagens højde.
+                new_coordinate = Node(coordinate.x, coordinate.y, desired_height)
                 baseline_path.append(new_coordinate)
             else:
                 baseline_path.append(end_node)
@@ -320,7 +364,9 @@ def find_baseline_path(workspace):
         power = 0
         previous_node = None
         for node in baseline_path:
+            # Power is calculated for each node.
             if previous_node is not None and node != end_node:
+                # Velocity is set if we are not at the start or end node.
                 node.velocity = 12
                 power += heuristic_power(previous_node, node, workspace)
             elif node == end_node:
@@ -335,10 +381,18 @@ def find_baseline_path(workspace):
 
 def find_optimal_path(workspace):
     mission = workspace.mission
+    wind_field = workspace.wind_field
+    wind_angle = workspace.wind_angle
     start_time = time.time()
     print('Finding optimal path...')
     start_node = mission.start
     end_node = mission.end
+
+    validate_workspace(workspace)
+    validate_mission(mission)
+
+    check_node_bounds(workspace, start_node)
+    check_node_bounds(workspace, end_node)
 
     # 4, 6, 8, 10, 12
     velocities = (10, 12)
@@ -368,7 +422,7 @@ def find_optimal_path(workspace):
                         predecessor[neighbor] = current
                         h_cost = heuristic_power(neighbor, end_node, workspace, is_heuristic=True)  # heuristic cost
                         punish = 0
-                        if neighbor.z <= 3:
+                        if neighbor.z <= 10:
                             punish = (10 - neighbor.z) * 130
                         a_cost = 1 * t_cost + 1 * h_cost + punish  # absolute cost
                         # print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
