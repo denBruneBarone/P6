@@ -13,14 +13,21 @@ def setup_workspace(mission):
     space = Workspace(dimensions, max_bounds, mission)
 
     # Add Blockages
-    blockage_matrix_1 = Blockage(50, 50, 10, 140, 140, 0, 'obstacle')
+    blockage_matrix_1 = Blockage(50, 50, 50, 150, 150, 0, 'obstacle')
     space.add_blockage(blockage_matrix_1)
-    blockage_matrix_2 = Blockage(50, 50, 30, 75, 75, 0, 'obstacle')
+    blockage_matrix_2 = Blockage(50, 50, 30, 0, 100, 0, 'obstacle')
     space.add_blockage(blockage_matrix_2)
-
-    # Add Windfield
-    # space.add_wind_field(45, 10)
-
+    blockage_matrix_3 = Blockage(40, 80, 10, 300, 50, 0, 'obstacle')
+    space.add_blockage(blockage_matrix_3)
+    blockage_matrix_4 = Blockage(40, 35, 15, 260, 95, 0, 'obstacle')
+    space.add_blockage(blockage_matrix_4)
+    blockage_matrix_5 = Blockage(40, 95, 25, 55, 185, 0, 'obstacle')
+    space.add_blockage(blockage_matrix_5)
+    blockage_matrix_6 = Blockage(100, 35, 20, 175, 200, 0, 'obstacle')
+    space.add_blockage(blockage_matrix_6)
+    blockage_matrix_7 = Blockage(100, 35, 10, 110, 310, 0, 'obstacle')
+    space.add_blockage(blockage_matrix_7)
+    space.set_wind(wind_speed=10, wind_angle=90)
     return space
 
 

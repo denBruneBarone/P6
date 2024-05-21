@@ -118,13 +118,13 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
     return max_time
 
 
-def heuristic_power(current_node, next_node, mission, is_heuristic=False):
+def heuristic_power(current_node, next_node, mission, wind_field, wind_angle, is_heuristic=False):
     if current_node == next_node:
         return 0
 
     time = calculate_time(current_node, next_node, mission, is_heuristic)
-    wind_speed = 0
-    wind_angle = 0
+    wind_speed = wind_field[int(current_node.x), int(current_node.y), int(current_node.z)]
+
 
     if current_node == mission.end:
         return 0
@@ -244,6 +244,8 @@ def get_neighbors_optimal_path(node, workspace):
 
 def find_baseline_path(workspace):
     mission = workspace.mission
+    wind_speed = workspace.wind_field
+    wind_angle = workspace.wind_angle
     start_node = mission.start
     end_node = mission.end
 
@@ -338,9 +340,9 @@ def find_baseline_path(workspace):
             if previous_node is not None and node != end_node:
                 # Velocity is set if we are not at the start or end node.
                 node.velocity = 12
-                power += heuristic_power(previous_node, node, mission)
+                power += heuristic_power(previous_node, node, mission, wind_speed, wind_angle)
             elif node == end_node:
-                power += heuristic_power(previous_node, node, mission)
+                power += heuristic_power(previous_node, node, mission, wind_speed, wind_angle)
             previous_node = node
 
         print("POWER: ", power)
@@ -351,6 +353,8 @@ def find_baseline_path(workspace):
 
 def find_optimal_path(workspace):
     mission = workspace.mission
+    wind_field = workspace.wind_field
+    wind_angle = workspace.wind_angle
     start_time = time.time()
     print('Finding optimal path...')
     start_node = mission.start
@@ -382,13 +386,13 @@ def find_optimal_path(workspace):
                     neighbor.velocity = velocity
                     c_cost = visited[current]  # current cost
                     n_cost = heuristic_power(current,  # neighbor cost
-                                             neighbor, mission)
+                                             neighbor, mission, wind_field, wind_angle)
                     t_cost = c_cost + n_cost  # Total cost = current + neighbor cost
 
                     if neighbor not in visited or t_cost < visited[neighbor]:
                         visited[neighbor] = t_cost
                         predecessor[neighbor] = current
-                        h_cost = heuristic_power(neighbor, end_node, mission, is_heuristic=True)  # heuristic cost
+                        h_cost = heuristic_power(neighbor, end_node, mission, wind_field, wind_angle, is_heuristic=True)  # heuristic cost
                         punish = 0
                         if neighbor.z <= 10:
                             punish = (10 - neighbor.z) * 130
