@@ -27,6 +27,31 @@ def power(target_labels):
     return target_labels[:, 0] * target_labels[:, 1]
 
 
+def set_axis_velocity(current_node, next_node, mission, is_heuristic):
+    current_velocity = current_node.velocity
+    next_velocity = next_node.velocity
+    end_node = mission.end
+
+    diff_x = abs(next_node.x - current_node.x)
+    diff_y = abs(next_node.y - current_node.y)
+    diff_z = abs(next_node.z - current_node.z)
+
+    movement_magnitude = (diff_x ** 2 + diff_y ** 2 + diff_z ** 2) ** 0.5
+
+    if next_node == end_node:
+        next_velocity = 0
+
+    if is_heuristic:
+        next_node.velocity_x = (diff_x / movement_magnitude) * current_velocity
+        next_node.velocity_y = (diff_y / movement_magnitude) * current_velocity
+        next_node.velocity_z = (diff_z / movement_magnitude) * current_velocity
+        return
+
+    next_node.velocity_x = (diff_x / movement_magnitude) * next_velocity
+    next_node.velocity_y = (diff_y / movement_magnitude) * next_velocity
+    next_node.velocity_z = (diff_z / movement_magnitude) * next_velocity
+
+
 def set_velocity_axis_return_distance(axis, current_node, next_node, mission, is_heuristic):
     current_velocity = current_node.velocity
     next_velocity = next_node.velocity
@@ -50,10 +75,11 @@ def set_velocity_axis_return_distance(axis, current_node, next_node, mission, is
 
 
 def calculate_time(current_node, next_node, mission, is_heuristic):
+    set_axis_velocity(current_node, next_node, mission, is_heuristic)
     time_axes = []
+
     for axis in ['x', 'y', 'z']:
-        # check om er 20 m og 3 m væk. hvis ja, kald denne. ellers exception
-        dist = set_velocity_axis_return_distance(axis, current_node, next_node, mission, is_heuristic)
+        dist = abs(getattr(next_node, axis) - getattr(current_node, axis))
 
         velocity_current_axis = getattr(current_node, 'velocity_' + axis)
         velocity_next_axis = getattr(next_node, 'velocity_' + axis)
@@ -82,7 +108,8 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
         time = t1 + t2
 
         if time < 0:
-            raise ValueError(f"Time is negative for axis {axis} in nodes {current_node} & {next_node}")
+            # raise ValueError(f"Time is negative for axis {axis} in nodes {current_node} & {next_node}")
+            pass
         time_axes.append(time)
 
     max_time = max(time_axes)
@@ -91,16 +118,19 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
     return max_time
 
 
-def heuristic_power(current_node, next_node, mission, is_heuristic=False):
+def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
     if current_node == next_node:
         return 0
 
+    mission = workspace.mission
+
+
     time = calculate_time(current_node, next_node, mission, is_heuristic)
-    wind_speed = 0
-    wind_angle = 0
 
     if current_node == mission.end:
         return 0
+
+    wind_angle, wind_speed = workspace.wind_field
 
     linear_acceleration_x = next_node.velocity_x / time
     linear_acceleration_y = next_node.velocity_y / time
@@ -292,9 +322,9 @@ def find_baseline_path(workspace):
         for node in baseline_path:
             if previous_node is not None and node != end_node:
                 node.velocity = 12
-                power += heuristic_power(previous_node, node, mission)
+                power += heuristic_power(previous_node, node, workspace)
             elif node == end_node:
-                power += heuristic_power(previous_node, node, mission)
+                power += heuristic_power(previous_node, node, workspace)
             previous_node = node
 
         print("POWER: ", power)
@@ -330,15 +360,15 @@ def find_optimal_path(workspace):
                     neighbor.velocity = velocity
                     c_cost = visited[current]  # current cost
                     n_cost = heuristic_power(current,  # neighbor cost
-                                             neighbor, mission)
+                                             neighbor, workspace)
                     t_cost = c_cost + n_cost  # Total cost = current + neighbor cost
 
                     if neighbor not in visited or t_cost < visited[neighbor]:
                         visited[neighbor] = t_cost
                         predecessor[neighbor] = current
-                        h_cost = heuristic_power(neighbor, end_node, mission, is_heuristic=True)  # heuristic cost
+                        h_cost = heuristic_power(neighbor, end_node, workspace, is_heuristic=True)  # heuristic cost
                         punish = 0
-                        if neighbor.z <= 10:
+                        if neighbor.z <= 3:
                             punish = (10 - neighbor.z) * 130
                         a_cost = 1 * t_cost + 1 * h_cost + punish  # absolute cost
                         # print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")

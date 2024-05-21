@@ -125,6 +125,9 @@ class Workspace:
                                   color='k', alpha=0.5))
         return ax
 
+    def add_wind_field(self, angle, wind_speed):
+        self.wind_field = angle, wind_speed
+
     # def add_wind_field(self, angle, wind_speed):
     #     # Convert wind angle to radians
     #     self.wind_angle_rad = np.radians(angle)

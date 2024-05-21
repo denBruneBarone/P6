@@ -1,13 +1,13 @@
 class HPConfig:
     criterion = 'friedman_mse'
-    max_depth = 10  # paper siger 7
+    max_depth = 4  # paper siger 7
     max_features = None
     max_leaf_nodes = 100
 
 
 class BestHPConfig:
     criterion = 'friedman_mse'
-    max_depth = 6
+    max_depth = 7
     max_features = None
     max_leaf_nodes = 10
 

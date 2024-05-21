@@ -36,9 +36,13 @@ def power(true_labels, predicted_labels):
     return true_power, predicted_power
 
 
+def custom_scoring_power(y_true, y_pred):
+    true_power, pred_power = power(y_true, y_pred)
+    return mae(true_power, pred_power)
+
 def custom_scoring_rmse(y_true, y_pred):
-    rmse_current = rmse(y_true[:, 0], y_pred[:, 0])
-    rmse_voltage = rmse(y_true[:, 1], y_pred[:, 1])
+    rmse_current = mae(y_true[:, 0], y_pred[:, 0])
+    rmse_voltage = mae(y_true[:, 1], y_pred[:, 1])
     return (rmse_current + rmse_voltage) / 2
 
 

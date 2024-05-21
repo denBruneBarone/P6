@@ -27,7 +27,7 @@ def train():
             model = pickle.load(model_file)
         evaluate_model(model, test_data, save_predictions_in_excel=False)
     else:
-        model = train_model(train_data, test_data, use_grid_search=False)
+        model = train_model(train_data, test_data, use_grid_search=True)
 
         print("Saving trained model...")
         with open(MODEL_FILE_PATH, 'wb') as model_file:

@@ -19,14 +19,14 @@ def setup_workspace(mission):
     # space.add_blockage(blockage_matrix_2)
 
     # Add Windfield
-    # space.add_wind_field(45, 10)
+    space.add_wind_field(0, 10)
 
     return space
 
 
 def find_and_show_optimal_path():
     # Define a mission
-    mission = Mission(Node(10, 10, 0), Node(30, 30, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(100, 100, 0), 0)
 
     workspace = setup_workspace(mission)
 
