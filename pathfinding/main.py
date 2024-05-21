@@ -33,18 +33,19 @@ def setup_workspace(mission):
 
 def find_and_show_optimal_path():
     # Define a mission
-    mission = Mission(Node(0, 0, 0), Node(160, 160, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(150, 150, 0), 500)
 
     workspace = setup_workspace(mission)
     #flight_optimal = find_optimal_path(workspace)
-    #flight_baseline = find_baseline_path(workspace)
+    flight_baseline = find_baseline_path(workspace)
     #print_stats(flight_optimal, flight_baseline)
 
-    #workspace.add_flight_path(flight_path=flight_baseline)
+    workspace.add_flight_path(flight_path=flight_baseline)
     #workspace.add_flight_path(flight_path=flight_optimal)
 
     workspace.plot_space(dimension='2D', dpi=800, show_wind=True)
-    #workspace.plot_space(dimension='3D', dpi=800)
+    workspace.plot_space(dimension='3D', dpi=800)
+    workspace.plot_space(dimension='XZ', dpi=800, show_wind=True)
 
 
 def print_stats(flight_optimal, flight_baseline):

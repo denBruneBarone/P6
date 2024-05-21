@@ -86,6 +86,8 @@ class Workspace:
                 ax.plot(segment_x_coords, segment_y_coords, segment_z_coords, color=segment_color, alpha=0.5)
             elif dimension == '2D':
                 ax.plot(segment_x_coords, segment_y_coords, color=segment_color, alpha=0.5)
+            elif dimension == 'XZ':
+                ax.plot(segment_x_coords, segment_z_coords, color=segment_color, alpha=0.5)
 
         # Plot flight paths
         for flight_path in self.flight_paths:
@@ -100,6 +102,9 @@ class Workspace:
             elif dimension == '2D':
                 ax.scatter(xs[0], ys[0], s=size, color=color)
                 ax.scatter(xs[-1], ys[-1], s=size, color=color)
+            elif dimension == 'XZ':
+                ax.scatter(xs[0], zs[0], s=size, color=color)
+                ax.scatter(xs[-1], zs[-1], s=size, color=color)
 
             # Iterate over each segment of the flight path
             for i in range(len(xs) - 1):
@@ -108,10 +113,18 @@ class Workspace:
                 y_coords = [ys[i], ys[i + 1]]
                 z_coords = [zs[i], zs[i + 1]]
 
-                # Check if the current segment intersects with any blockage
-                segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords,
-                                                                                            z_coords,
-                                                                                            self.blockages)
+                if dimension == '3D':
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords,
+                                                                                                z_coords,
+                                                                                                self.blockages)
+                elif dimension == '2D':
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, y_coords,
+                                                                                                [0, 0], self.blockages)
+                elif dimension == 'XZ':
+                    segment_intersects = collision_detection.check_segment_intersects_blockages(x_coords, [0, 0],
+                                                                                                z_coords,
+                                                                                                self.blockages)
+
                 if segment_intersects:
                     plot_segment(x_coords, y_coords, z_coords, segment_color='r')
                 else:
@@ -119,9 +132,12 @@ class Workspace:
                         plot_segment(x_coords, y_coords, z_coords, segment_color='b')
                     elif flight_path.path_type == 'optimal':
                         plot_segment(x_coords, y_coords, z_coords, segment_color='g')
+
         return ax
 
     def plot_space(self, dimension='3D', dpi=300, show_wind=False):
+        grid_color = 'gray'
+
         if dimension == '3D':
             fig = plt.figure(dpi=dpi)
             ax = fig.add_subplot(111, projection='3d')
@@ -139,7 +155,6 @@ class Workspace:
             ax.set_zlim([0, self.max_bounds[2]])
 
         elif dimension == '2D':
-            grid_color = 'gray'
             fig, ax = plt.subplots(dpi=dpi)
 
             # Plot blockages
@@ -155,6 +170,22 @@ class Workspace:
             ax.set_ylim([0, self.max_bounds[1]])
             ax.set_aspect('equal', adjustable='box')
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
+
+        elif dimension == 'XZ':
+            fig, ax = plt.subplots(dpi=dpi)
+
+            # Plot blockages
+            ax = self.plot_blockages(ax, dimension='XZ')
+            ax = self.plot_flight_paths(ax, dimension='XZ')
+
+            # Set labels and limits
+            ax.set_xlabel('X')
+            ax.set_ylabel('Z')
+            ax.set_xlim([0, self.max_bounds[0]])
+            ax.set_ylim([0, self.max_bounds[2]])
+            ax.set_aspect(5, adjustable='box')
+            ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
+
         plt.show()
 
 
@@ -185,6 +216,12 @@ class Workspace:
                 x, y = blockage_matrix.positions[:2]
                 ax.add_patch(
                     plt.Rectangle((x, y), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[1],
+                                  color='k', alpha=0.5))
+        elif dimension == 'XZ':
+            for blockage_matrix in self.blockages:
+                x, _, z = blockage_matrix.positions
+                ax.add_patch(
+                    plt.Rectangle((x, z), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[2],
                                   color='k', alpha=0.5))
         return ax
 
