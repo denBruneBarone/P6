@@ -27,14 +27,13 @@ def setup_workspace(mission):
     space.add_blockage(blockage_matrix_6)
     blockage_matrix_7 = Blockage(100, 35, 10, 110, 310, 0, 'obstacle')
     space.add_blockage(blockage_matrix_7)
-
-    space.set_wind(wind_direction=0, wind_speed=10)
+    space.set_wind(wind_speed=10, wind_angle=90)
     return space
 
 
 def find_and_show_optimal_path():
     # Define a mission
-    mission = Mission(Node(0, 0, 0), Node(50, 50, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(160, 160, 0), 500)
 
     workspace = setup_workspace(mission)
     #flight_optimal = find_optimal_path(workspace)

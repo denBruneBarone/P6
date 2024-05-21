@@ -7,7 +7,6 @@ from pathfinding import collision_detection, Blockage
 
 class Workspace:
     def __init__(self, dimensions, max_bounds, mission):
-        self.wind = None
         self.dimensions = dimensions
         self.max_bounds = max_bounds
         self.flight_paths = []
@@ -31,13 +30,13 @@ class Workspace:
     def add_flight_path(self, flight_path):
         self.flight_paths.append(flight_path)
 
-    def set_wind(self, wind_direction, wind_speed):
-        self.wind_angle_rad = np.radians(90 - wind_direction)  # Adjusting for 0 being south
-        self.wind_angle = wind_direction
+    def set_wind(self, wind_speed, wind_angle):
+        self.wind_angle_rad = np.radians(90 - wind_angle)  # Adjusting for 0 being south
+        self.wind_angle = wind_angle
         wind_speed_grid = np.ones((self.max_bounds[0], self.max_bounds[1], self.max_bounds[2]))
 
         for blockage in self.blockages:
-            if 315 < wind_direction or wind_direction <= 45: # Wind coming from north
+            if 315 < wind_angle or wind_angle <= 45: # Wind coming from north
                 start_x = blockage.positions[0]
                 start_y = 0
                 start_z = 0
@@ -45,7 +44,7 @@ class Workspace:
                 end_y = blockage.positions[1] + blockage.np_array.shape[1]
                 end_z = blockage.np_array.shape[2]
 
-            elif 45 < wind_direction <= 135:
+            elif 45 < wind_angle <= 135: # Wind coming from east
                 start_x = 0
                 start_y = blockage.positions[1]
                 start_z = 0
@@ -53,14 +52,14 @@ class Workspace:
                 end_y = blockage.positions[1] + blockage.np_array.shape[1]
                 end_z = blockage.np_array.shape[2]
 
-            elif 135 < wind_direction <= 225:
+            elif 135 < wind_angle <= 225: # Wind coming from south
                 start_x = blockage.positions[0]
                 start_y = blockage.positions[1]
                 start_z = 0
                 end_x = blockage.positions[0] + blockage.np_array.shape[0]
                 end_y = self.max_bounds[1]
                 end_z = blockage.np_array.shape[2]
-            else: # 225 < wind_direction <= 315
+            else: # 225 < wind_angle <= 315, Wind coming from west
                 start_x = blockage.positions[0]
                 start_y = blockage.positions[1]
                 start_z = 0
@@ -205,6 +204,6 @@ class Workspace:
         ax.annotate('',
                     xy=(self.max_bounds[0] / 2, self.max_bounds[1] / 2),
                     xytext=(arrow_end_x, arrow_end_y),
-                    arrowprops=dict(facecolor='blue', edgecolor='blue', alpha=0.4,
+                    arrowprops=dict(facecolor='red', edgecolor='red', alpha=0.4,
                                     path_effects=[path_effects.withSimplePatchShadow(offset=(-1, -1))]))
         return ax
