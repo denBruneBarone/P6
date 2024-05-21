@@ -36,7 +36,7 @@ class Workspace:
         wind_speed_grid = np.ones((self.max_bounds[0], self.max_bounds[1], self.max_bounds[2]))
 
         for blockage in self.blockages:
-            if 315 < wind_angle or wind_angle <= 45: # Wind coming from north
+            if 315 < wind_angle or wind_angle <= 45:  # Wind coming from north
                 start_x = blockage.positions[0]
                 start_y = 0
                 start_z = 0
@@ -44,7 +44,7 @@ class Workspace:
                 end_y = blockage.positions[1] + blockage.np_array.shape[1]
                 end_z = blockage.np_array.shape[2]
 
-            elif 45 < wind_angle <= 135: # Wind coming from east
+            elif 45 < wind_angle <= 135:  # Wind coming from east
                 start_x = 0
                 start_y = blockage.positions[1]
                 start_z = 0
@@ -52,14 +52,14 @@ class Workspace:
                 end_y = blockage.positions[1] + blockage.np_array.shape[1]
                 end_z = blockage.np_array.shape[2]
 
-            elif 135 < wind_angle <= 225: # Wind coming from south
+            elif 135 < wind_angle <= 225:  # Wind coming from south
                 start_x = blockage.positions[0]
                 start_y = blockage.positions[1]
                 start_z = 0
                 end_x = blockage.positions[0] + blockage.np_array.shape[0]
                 end_y = self.max_bounds[1]
                 end_z = blockage.np_array.shape[2]
-            else: # 225 < wind_angle <= 315, Wind coming from west
+            else:  # 225 < wind_angle <= 315, Wind coming from west
                 start_x = blockage.positions[0]
                 start_y = blockage.positions[1]
                 start_z = 0
@@ -157,8 +157,6 @@ class Workspace:
             ax.grid(True, color=grid_color, linestyle='--', linewidth=0.5, alpha=0.5)
         plt.show()
 
-
-
     def check_blockage_in_line_of_sight(self, x, y, wind_direction_rad):
         # Iterate over each blockage and check if it obstructs the line of sight of the wind
         for blockage in self.blockages:
@@ -178,14 +176,14 @@ class Workspace:
         if dimension == '3D':
             for blockage_matrix in self.blockages:
                 x, y, z = blockage_matrix.positions
-                ax.bar3d(x, y, z, *blockage_matrix.np_array.shape, color='k', alpha=0.5, edgecolor='black',
+                ax.bar3d(x, y, z, *blockage_matrix.np_array.shape, color='grey', alpha=0.5, edgecolor='black',
                          linewidth=0.5)
         elif dimension == '2D':
             for blockage_matrix in self.blockages:
                 x, y = blockage_matrix.positions[:2]
                 ax.add_patch(
                     plt.Rectangle((x, y), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[1],
-                                  color='k', alpha=0.5))
+                                  color='grey', alpha=0.5))
         return ax
 
     def plot_wind(self, ax):

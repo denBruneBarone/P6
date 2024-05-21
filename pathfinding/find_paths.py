@@ -41,8 +41,8 @@ def validate_mission(mission):
 def is_within_bounds(workspace, node):
     max_x, max_y, max_z = workspace.max_bounds
     return (0 <= node.x <= max_x) and \
-           (0 <= node.y <= max_y) and \
-           (0 <= node.z <= max_z)
+        (0 <= node.y <= max_y) and \
+        (0 <= node.z <= max_z)
 
 
 def check_node_bounds(workspace, node):
@@ -149,7 +149,6 @@ def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
         return 0
 
     mission = workspace.mission
-
 
     time = calculate_time(current_node, next_node, mission, is_heuristic)
     wind_speed = workspace.wind_field[int(current_node.x), int(current_node.y), int(current_node.z)]
@@ -273,8 +272,6 @@ def get_neighbors_optimal_path(node, workspace):
 
 def find_baseline_path(workspace):
     mission = workspace.mission
-    wind_speed = workspace.wind_field
-    wind_angle = workspace.wind_angle
     start_node = mission.start
     end_node = mission.end
 
@@ -381,8 +378,6 @@ def find_baseline_path(workspace):
 
 def find_optimal_path(workspace):
     mission = workspace.mission
-    wind_field = workspace.wind_field
-    wind_angle = workspace.wind_angle
     start_time = time.time()
     print('Finding optimal path...')
     start_node = mission.start
