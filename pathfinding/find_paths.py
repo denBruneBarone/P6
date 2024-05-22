@@ -165,6 +165,20 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
     return max_time
 
 
+def calculate_path_power(path, workspace):
+    mission = workspace.mission
+    power = 0
+    previous_node = None
+    end_node = mission.end
+    for node in path:
+        # Power is calculated for each node.
+        if previous_node is not None and node != end_node:
+            power += heuristic_power(previous_node, node, workspace)
+        elif node == end_node:
+            power += heuristic_power(previous_node, node, workspace)
+        previous_node = node
+    return power
+
 def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
     if current_node == next_node:
         return 0
@@ -390,17 +404,8 @@ def find_baseline_path(workspace):
         path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
         print(path_coordinates)
 
-        power = 0
-        previous_node = None
-        for node in baseline_path:
-            # Power is calculated for each node.
-            if previous_node is not None and node != end_node:
-                power += heuristic_power(previous_node, node, workspace)
-            elif node == end_node:
-                power += heuristic_power(previous_node, node, workspace)
-            previous_node = node
+        power = calculate_path_power(baseline_path, workspace)
 
-        print("POWER: ", power)
         return EnergyPath(path_coordinates, power, path_type='baseline')
     else:
         raise NotImplementedError('The baseline path is too high for the workspace')
@@ -464,15 +469,7 @@ def find_optimal_path(workspace):
 
     path_coordinates = [(node.x, node.y, node.z) for node in path]
     print(path_coordinates)
-    power = a_cost
-
-    for node in path:
-        if node != start_node and node != end_node:
-            if node.z <= 10:
-                power -= (10 - node.z) * 130
-
-    print("power", power)
-    print("a_cost", a_cost)
+    power = calculate_path_power(path, workspace)
 
     if power > a_cost:
         raise ValueError("power is larger than a_cost after deducting punishment")
