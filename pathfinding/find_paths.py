@@ -167,8 +167,6 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
     return max_time
 
 
-
-
 def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
     if current_node == next_node:
         return 0
@@ -403,8 +401,6 @@ def find_baseline_path(workspace):
         for node in baseline_path:
             # Power is calculated for each node.
             if previous_node is not None and node != end_node:
-                # Velocity is set if we are not at the start or end node.
-                node.velocity = 12
                 power += heuristic_power(previous_node, node, workspace)
             elif node == end_node:
                 power += heuristic_power(previous_node, node, workspace)
@@ -429,8 +425,6 @@ def find_optimal_path(workspace):
     check_node_bounds(workspace, start_node)
     check_node_bounds(workspace, end_node)
 
-    # 4, 6, 8, 10, 12
-    velocities = (10, 12)
     pq = [(0, start_node)]
 
     visited = {start_node: 0}
