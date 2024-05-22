@@ -33,7 +33,7 @@ def setup_workspace(mission):
 
 def find_and_show_optimal_path():
     # Define a mission
-    mission = Mission(Node(0, 0, 0), Node(225, 175, 0), 500)
+    mission = Mission(Node(0, 0, 0), Node(400, 400, 0), 500)
 
     workspace = setup_workspace(mission)
 
