@@ -31,26 +31,21 @@ def calculate_energy_by_summing_wh(data):
     return flight_energy
 
 
-def calculate_energy_by_summing_watts(data):
+def calculate_average_power(data):
     # Calculate power consumption for each row
     data['power'] = data['battery_voltage'] * data['battery_current']
 
-    # Group data by flight and sum power consumption for each flight
+    # Group data by flight
     flight_groups = data.groupby('flight')
-    flight_energy = {}
+    flight_average_power = {}
 
+    # For each flight grouped in the dataset
     for flight, flight_data in flight_groups:
-        total_energy = 0
-        prev_time = flight_data['time'].iloc[0]
+        # Calculate the mean power for the flight
+        average_power = flight_data['power'].mean()
+        flight_average_power[flight] = average_power
 
-        for index, row in flight_data.iterrows():
-            time_interval = row['time'] - prev_time
-            total_energy += row['power'] * time_interval.total_seconds()  # Convert time interval to seconds
-            prev_time = row['time']
-
-        flight_energy[flight] = total_energy
-
-    return flight_energy
+    return flight_average_power
 
 
 def plot_connected_graph(data_x, data_y, label, color, linestyle='-'):
@@ -80,19 +75,32 @@ def plot_stacked_chart(data_summing, data_integrated):
     plt.show()
 
 
-data_summing_joules = calculate_energy_by_summing_wh(read_csv())
+data = calculate_average_power(read_csv())
+unit = 'W'
 
-print(f"CALCULATION ENERGY CONSUMPTION FOR ALL FLIGHTS")
+print(f"CALCULATING AVERAGE ENERGY CONSUMPTION FOR ALL FLIGHTS")
 print("")
 
 # Summation
 print("-----------------------------------------------")
 print("Calculate using summation")
 print("-----------------------------------------------")
-for key, value in data_summing_joules.items():
-    print(f"Flight {key}: ", '%.2f' % value, 'WH', sep='')  # Using string concatenation
+for key, value in data.items():
+    print(f"Flight {key}: ", '%.2f' % value, unit, sep='')  # Using string concatenation
 print("-----------------------------------------------")
-print(f"Total number of flights {data_summing_joules.__len__()}")
+print(f"Total number of flights {len(data)}")
 print("")
 
 # plot_stacked_chart(data_summing, data_integrated)
+
+print(f"CALCULATING AVERAGE ENERGY CONSUMPTION ACROSS ALL FLIGHTS")
+print("-----------------------------------------------")
+print("Calculate using summation")
+print("-----------------------------------------------")
+sum_value = sum(data.values())
+len_value = len(data)
+average = sum_value / len_value
+print(f"Average: ", '%.2f' % average, unit, sep='')  # Using string concatenation
+print("-----------------------------------------------")
+print(f"Total number of flights {len(data)}")
+print("")
