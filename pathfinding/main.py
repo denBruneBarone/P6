@@ -13,9 +13,9 @@ def setup_workspace(mission):
     space = Workspace(dimensions, max_bounds, mission)
 
     # Add Blockages
-    blockage_matrix_1 = Blockage(50, 50, 50, 150, 150, 0, 'obstacle')
+    blockage_matrix_1 = Blockage(40, 80, 10, 320, 290, 0, 'obstacle')
     space.add_blockage(blockage_matrix_1)
-    blockage_matrix_2 = Blockage(50, 50, 30, 0, 100, 0, 'obstacle')
+    blockage_matrix_2 = Blockage(90, 50, 30, 100, 100, 0, 'obstacle')
     space.add_blockage(blockage_matrix_2)
     blockage_matrix_3 = Blockage(40, 80, 10, 300, 50, 0, 'obstacle')
     space.add_blockage(blockage_matrix_3)
@@ -46,9 +46,9 @@ def find_and_show_optimal_path():
 
     workspace.add_flight_path(flight_baseline)
     workspace.add_flight_path(flight_path=flight_optimal)
-
-    workspace.plot_space(dimension='2D', dpi=800, show_wind=False)
+    workspace.plot_space(dimension='2D', dpi=800, show_wind=True)
     workspace.plot_space(dimension='3D', dpi=800)
+    workspace.plot_space(dimension='XZ', dpi=800, show_wind=True)
 
 
 def print_stats(flight_optimal=None, flight_baseline=None):
