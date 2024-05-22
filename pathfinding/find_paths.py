@@ -129,8 +129,6 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
             velocity_current_axis = getattr(current_node, 'velocity_' + axis)
             velocity_next_axis = getattr(next_node, 'velocity_' + axis)
 
-
-
         t1 = 0  # time of acceleration
         t2 = 0  # time of constant velocity
 
@@ -165,8 +163,6 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
     if max_time == 0:
         raise ValueError(f'max_time is 0! for nodes {current_node} & {next_node}')
     return max_time
-
-
 
 
 def heuristic_power(current_node, next_node, workspace, is_heuristic=False):

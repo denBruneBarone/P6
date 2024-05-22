@@ -36,7 +36,7 @@ class Workspace:
         wind_speed_grid = np.ones((self.max_bounds[0], self.max_bounds[1], self.max_bounds[2]))
 
         for blockage in self.blockages:
-            if 315 < wind_angle or wind_angle <= 45: # Wind coming from north
+            if 315 < wind_angle or wind_angle <= 45:  # Wind coming from north
                 start_x = blockage.positions[0]
                 start_y = 0
                 start_z = 0
@@ -44,7 +44,7 @@ class Workspace:
                 end_y = blockage.positions[1] + blockage.np_array.shape[1]
                 end_z = blockage.np_array.shape[2]
 
-            elif 45 < wind_angle <= 135: # Wind coming from east
+            elif 45 < wind_angle <= 135:  # Wind coming from east
                 start_x = 0
                 start_y = blockage.positions[1]
                 start_z = 0
@@ -52,14 +52,14 @@ class Workspace:
                 end_y = blockage.positions[1] + blockage.np_array.shape[1]
                 end_z = blockage.np_array.shape[2]
 
-            elif 135 < wind_angle <= 225: # Wind coming from south
+            elif 135 < wind_angle <= 225:  # Wind coming from south
                 start_x = blockage.positions[0]
                 start_y = blockage.positions[1]
                 start_z = 0
                 end_x = blockage.positions[0] + blockage.np_array.shape[0]
                 end_y = self.max_bounds[1]
                 end_z = blockage.np_array.shape[2]
-            else: # 225 < wind_angle <= 315, Wind coming from west
+            else:  # 225 < wind_angle <= 315, Wind coming from west
                 start_x = blockage.positions[0]
                 start_y = blockage.positions[1]
                 start_z = 0
