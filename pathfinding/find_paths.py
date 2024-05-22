@@ -129,8 +129,6 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
             velocity_current_axis = getattr(current_node, 'velocity_' + axis)
             velocity_next_axis = getattr(next_node, 'velocity_' + axis)
 
-
-
         t1 = 0  # time of acceleration
         t2 = 0  # time of constant velocity
 
