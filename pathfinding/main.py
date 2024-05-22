@@ -44,7 +44,7 @@ def find_and_show_optimal_path():
     flight_baseline = find_baseline_path(workspace)
     print_stats(flight_optimal, flight_baseline)
 
-    workspace.add_flight_path(flight_baseline)
+    workspace.add_flight_path(flight_path=flight_baseline)
     workspace.add_flight_path(flight_path=flight_optimal)
     workspace.plot_space(dimension='2D', dpi=800, show_wind=True)
     workspace.plot_space(dimension='3D', dpi=800)
