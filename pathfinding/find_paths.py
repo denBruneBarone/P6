@@ -297,7 +297,7 @@ def get_neighbors_optimal_path(node, workspace):
             new_node = Node(new_x, new_y, new_z)
             if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                       [node.z, new_z],
-                                                                      workspace.blockages) is False and is_within_bounds(workspace, new_node):
+                                                                      workspace.blockages) is False and is_within_bounds(workspace, new_node) and new_z > 0:
                 neighbors.append(new_node)
     return neighbors
 
