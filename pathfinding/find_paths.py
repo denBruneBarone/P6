@@ -70,8 +70,6 @@ def set_velocity_axis_return_distance(axis, current_node, next_node, mission, is
         setattr(current_node, 'velocity_' + axis, current_velocity)
     if next_velocity == 0:
         return diff_coord
-
-    # TODO: Skriv i paper
     if axis != 'z':
         setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity))  # TODO: check paper
     else:
@@ -113,8 +111,10 @@ def set_axis_velocity(current_node, next_node, mission):
 
 
 def calculate_time(current_node, next_node, mission, is_heuristic):
-    set_axis_velocity(current_node, next_node, mission)
     time_axes = []
+
+    if not is_heuristic:
+        set_axis_velocity(current_node, next_node, mission)
 
     for axis in ['x', 'y', 'z']:
         dist = abs(getattr(next_node, axis) - getattr(current_node, axis))
@@ -284,10 +284,6 @@ def get_neighbors_optimal_path(node, workspace):
     if distance_h(end_node, node) <= 20 and distance_v(end_node,
                                                        node) <= 3 and collision_detection.check_segment_intersects_blockages(
         [node.x, end_node.x], [node.y, end_node.y], [node.z, end_node.z], workspace.blockages) is False:
-        end_node.velocity = 0
-        end_node.velocity_x = 0
-        end_node.velocity_y = 0
-        end_node.velocity_z = 0
         neighbors.append(end_node)
 
         if node == start_node:
@@ -301,7 +297,7 @@ def get_neighbors_optimal_path(node, workspace):
             new_node = Node(new_x, new_y, new_z)
             if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                       [node.z, new_z],
-                                                                      workspace.blockages) is False and new_z > 0 and new_y >= 0 and new_x >= 0:
+                                                                      workspace.blockages) is False and is_within_bounds(workspace, new_node):
                 neighbors.append(new_node)
     return neighbors
 
