@@ -126,7 +126,7 @@ class Workspace:
             fig = plt.figure(dpi=dpi)
             ax = fig.add_subplot(111, projection='3d')
 
-            # Plot blockages
+            # Plot blockages and flight_path
             ax = self.plot_blockages(ax, dimension='3D')
             ax = self.plot_flight_paths(ax, dimension='3D')
 
@@ -142,8 +142,9 @@ class Workspace:
             grid_color = 'gray'
             fig, ax = plt.subplots(dpi=dpi)
 
-            # Plot blockages
+            # Plot blockages and flight_path
             ax = self.plot_blockages(ax, dimension='2D')
+            ax = self.plot_flight_paths(ax, dimension='2D')
 
             if show_wind:
                 ax = self.plot_wind(ax)
@@ -176,14 +177,14 @@ class Workspace:
         if dimension == '3D':
             for blockage_matrix in self.blockages:
                 x, y, z = blockage_matrix.positions
-                ax.bar3d(x, y, z, *blockage_matrix.np_array.shape, color='grey', alpha=0.5, edgecolor='black',
+                ax.bar3d(x, y, z, *blockage_matrix.np_array.shape, color='k', alpha=0.2, edgecolor='black',
                          linewidth=0.5)
         elif dimension == '2D':
             for blockage_matrix in self.blockages:
                 x, y = blockage_matrix.positions[:2]
                 ax.add_patch(
                     plt.Rectangle((x, y), blockage_matrix.np_array.shape[0], blockage_matrix.np_array.shape[1],
-                                  color='grey', alpha=0.5))
+                                  color='k', alpha=0.4))
         return ax
 
     def plot_wind(self, ax):
