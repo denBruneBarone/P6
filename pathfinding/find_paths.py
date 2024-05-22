@@ -70,8 +70,6 @@ def set_velocity_axis_return_distance(axis, current_node, next_node, mission, is
         setattr(current_node, 'velocity_' + axis, current_velocity)
     if next_velocity == 0:
         return diff_coord
-
-    # TODO: Skriv i paper
     if axis != 'z':
         setattr(next_node, 'velocity_' + axis, diff_coord / (20 / next_velocity))  # TODO: check paper
     else:
@@ -113,8 +111,10 @@ def set_axis_velocity(current_node, next_node, mission):
 
 
 def calculate_time(current_node, next_node, mission, is_heuristic):
-    set_axis_velocity(current_node, next_node, mission)
     time_axes = []
+
+    if not is_heuristic:
+        set_axis_velocity(current_node, next_node, mission)
 
     for axis in ['x', 'y', 'z']:
         dist = abs(getattr(next_node, axis) - getattr(current_node, axis))
@@ -164,6 +164,20 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
         raise ValueError(f'max_time is 0! for nodes {current_node} & {next_node}')
     return max_time
 
+
+def calculate_path_power(path, workspace):
+    mission = workspace.mission
+    power = 0
+    previous_node = None
+    end_node = mission.end
+    for node in path:
+        # Power is calculated for each node.
+        if previous_node is not None and node != end_node:
+            power += heuristic_power(previous_node, node, workspace)
+        elif node == end_node:
+            power += heuristic_power(previous_node, node, workspace)
+        previous_node = node
+    return power
 
 def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
     if current_node == next_node:
@@ -284,10 +298,6 @@ def get_neighbors_optimal_path(node, workspace):
     if distance_h(end_node, node) <= 20 and distance_v(end_node,
                                                        node) <= 3 and collision_detection.check_segment_intersects_blockages(
         [node.x, end_node.x], [node.y, end_node.y], [node.z, end_node.z], workspace.blockages) is False:
-        end_node.velocity = 0
-        end_node.velocity_x = 0
-        end_node.velocity_y = 0
-        end_node.velocity_z = 0
         neighbors.append(end_node)
 
         if node == start_node:
@@ -301,7 +311,7 @@ def get_neighbors_optimal_path(node, workspace):
             new_node = Node(new_x, new_y, new_z)
             if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                       [node.z, new_z],
-                                                                      workspace.blockages) is False and new_z > 0 and new_y >= 0 and new_x >= 0:
+                                                                      workspace.blockages) is False and is_within_bounds(workspace, new_node) and new_z > 0:
                 neighbors.append(new_node)
     return neighbors
 
@@ -394,19 +404,8 @@ def find_baseline_path(workspace):
         path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
         print(path_coordinates)
 
-        power = 0
-        previous_node = None
-        for node in baseline_path:
-            # Power is calculated for each node.
-            if previous_node is not None and node != end_node:
-                # Velocity is set if we are not at the start or end node.
-                node.velocity = 12
-                power += heuristic_power(previous_node, node, workspace)
-            elif node == end_node:
-                power += heuristic_power(previous_node, node, workspace)
-            previous_node = node
+        power = calculate_path_power(baseline_path, workspace)
 
-        print("POWER: ", power)
         return EnergyPath(path_coordinates, power, path_type='baseline')
     else:
         raise NotImplementedError('The baseline path is too high for the workspace')
@@ -425,8 +424,6 @@ def find_optimal_path(workspace):
     check_node_bounds(workspace, start_node)
     check_node_bounds(workspace, end_node)
 
-    # 4, 6, 8, 10, 12
-    velocities = (10, 12)
     pq = [(0, start_node)]
 
     visited = {start_node: 0}
@@ -472,15 +469,7 @@ def find_optimal_path(workspace):
 
     path_coordinates = [(node.x, node.y, node.z) for node in path]
     print(path_coordinates)
-    power = a_cost
-
-    for node in path:
-        if node != start_node and node != end_node:
-            if node.z <= 10:
-                power -= (10 - node.z) * 130
-
-    print("power", power)
-    print("a_cost", a_cost)
+    power = calculate_path_power(path, workspace)
 
     if power > a_cost:
         raise ValueError("power is larger than a_cost after deducting punishment")
