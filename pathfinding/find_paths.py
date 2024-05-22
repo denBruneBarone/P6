@@ -14,6 +14,9 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 # Define the path for saving/loading the model
 MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/trained_model.pkl")
 
+MAX_VELOCITY = 10
+MAX_VELOCITY_V = 1.5
+
 
 def load_model(file_path):
     with open(file_path, 'rb') as f:
@@ -54,31 +57,6 @@ def power(target_labels):
     return target_labels[:, 0] * target_labels[:, 1]
 
 
-def set_axis_velocity(current_node, next_node, mission, is_heuristic):
-    current_velocity = current_node.velocity
-    next_velocity = next_node.velocity
-    end_node = mission.end
-
-    diff_x = abs(next_node.x - current_node.x)
-    diff_y = abs(next_node.y - current_node.y)
-    diff_z = abs(next_node.z - current_node.z)
-
-    movement_magnitude = (diff_x ** 2 + diff_y ** 2 + diff_z ** 2) ** 0.5
-
-    if next_node == end_node:
-        next_velocity = 0
-
-    if is_heuristic:
-        next_node.velocity_x = (diff_x / movement_magnitude) * current_velocity
-        next_node.velocity_y = (diff_y / movement_magnitude) * current_velocity
-        next_node.velocity_z = (diff_z / movement_magnitude) * current_velocity
-        return
-
-    next_node.velocity_x = (diff_x / movement_magnitude) * next_velocity
-    next_node.velocity_y = (diff_y / movement_magnitude) * next_velocity
-    next_node.velocity_z = (diff_z / movement_magnitude) * next_velocity
-
-
 def set_velocity_axis_return_distance(axis, current_node, next_node, mission, is_heuristic):
     current_velocity = current_node.velocity
     next_velocity = next_node.velocity
@@ -101,15 +79,58 @@ def set_velocity_axis_return_distance(axis, current_node, next_node, mission, is
     return diff_coord
 
 
+def set_axis_velocity(current_node, next_node, mission):
+    if next_node == mission.end:
+        next_node.velocity_x = 0
+        next_node.velocity_y = 0
+        next_node.velocity_z = 0
+        return
+
+    # difference in distance on each coordinate in abosulute values
+    diff_x = abs(next_node.x - current_node.x)
+    diff_y = abs(next_node.y - current_node.y)
+    diff_z = abs(next_node.z - current_node.z)
+
+    movement_magnitude = (diff_x ** 2 + diff_y ** 2 + diff_z ** 2) ** 0.5
+
+    if diff_z > 0:
+        next_node.velocity_z = MAX_VELOCITY_V
+    else:
+        next_node.velocity_z = 0
+
+    remaining_velocity = (MAX_VELOCITY ** 2 - next_node.velocity_z ** 2) ** 0.5
+
+    proportion_x = diff_x / movement_magnitude
+    proportion_y = diff_y / movement_magnitude
+    horizontal_magnitude = (diff_x ** 2 + diff_y ** 2) ** 0.5
+
+    if horizontal_magnitude > 0:
+        next_node.velocity_x = proportion_x * remaining_velocity
+        next_node.velocity_y = proportion_y * remaining_velocity
+    else:
+        next_node.velocity_x = 0
+        next_node.velocity_y = 0
+
+
 def calculate_time(current_node, next_node, mission, is_heuristic):
-    set_axis_velocity(current_node, next_node, mission, is_heuristic)
+    set_axis_velocity(current_node, next_node, mission)
     time_axes = []
 
     for axis in ['x', 'y', 'z']:
         dist = abs(getattr(next_node, axis) - getattr(current_node, axis))
 
-        velocity_current_axis = getattr(current_node, 'velocity_' + axis)
-        velocity_next_axis = getattr(next_node, 'velocity_' + axis)
+        if is_heuristic:
+            if axis != 'z':
+                velocity_current_axis = MAX_VELOCITY
+            else:
+                velocity_current_axis = MAX_VELOCITY_V
+            velocity_next_axis = 0
+        else:
+            velocity_current_axis = getattr(current_node, 'velocity_' + axis)
+            velocity_next_axis = getattr(next_node, 'velocity_' + axis)
+
+
+
         t1 = 0  # time of acceleration
         t2 = 0  # time of constant velocity
 
@@ -121,12 +142,14 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
         if velocity_current_axis == 0 and velocity_next_axis == 0:
             pass
 
+        # flyv og så deaccelerer bagefter
         elif velocity_next_axis != 0:
             t1 = abs((velocity_next_axis - velocity_current_axis) / a)
             if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
                 t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
                       / abs(velocity_next_axis))
 
+        # accelerer og så flyv
         else:
             t1 = abs((velocity_next_axis - velocity_current_axis) / a)
             if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
@@ -144,6 +167,8 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
     return max_time
 
 
+
+
 def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
     if current_node == next_node:
         return 0
@@ -157,13 +182,28 @@ def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
     if current_node == mission.end:
         return 0
 
-    linear_acceleration_x = next_node.velocity_x / time
-    linear_acceleration_y = next_node.velocity_y / time
-    linear_acceleration_z = next_node.velocity_z / time
+    if is_heuristic:
+        curr_velocity_x = MAX_VELOCITY
+        curr_velocity_y = MAX_VELOCITY
+        curr_velocity_z = MAX_VELOCITY_V
+        next_velocity_x = 0
+        next_velocity_y = 0
+        next_velocity_z = 0
+    else:
+        curr_velocity_x = current_node.velocity_x
+        curr_velocity_y = current_node.velocity_y
+        curr_velocity_z = current_node.velocity_z
+        next_velocity_x = next_node.velocity_x
+        next_velocity_y = next_node.velocity_y
+        next_velocity_z = next_node.velocity_z
+
+    linear_acceleration_x = (next_velocity_x - curr_velocity_x) / time
+    linear_acceleration_y = (next_velocity_y - curr_velocity_y) / time
+    linear_acceleration_z = (next_velocity_z - curr_velocity_z) / time
 
     input_array = [[time, wind_speed, wind_angle,
                     next_node.x - current_node.x, next_node.y - current_node.y, next_node.z - current_node.z,
-                    next_node.velocity_x, next_node.velocity_y, next_node.velocity_z,
+                    curr_velocity_x, curr_velocity_y, curr_velocity_z,
                     linear_acceleration_x, linear_acceleration_y, linear_acceleration_z,
                     mission.payload]]
 
@@ -405,26 +445,24 @@ def find_optimal_path(workspace):
 
         try:
             for neighbor in get_neighbors_optimal_path(current, workspace):
-                for velocity in velocities:
-                    neighbor.velocity = velocity
-                    c_cost = visited[current]  # current cost
-                    n_cost = heuristic_power(current,  # neighbor cost
-                                             neighbor, workspace)
-                    t_cost = c_cost + n_cost  # Total cost = current + neighbor cost
+                c_cost = visited[current]  # current cost
+                n_cost = heuristic_power(current,  # neighbor cost
+                                         neighbor, workspace)
+                t_cost = c_cost + n_cost  # Total cost = current + neighbor cost
 
-                    if neighbor not in visited or t_cost < visited[neighbor]:
-                        visited[neighbor] = t_cost
-                        predecessor[neighbor] = current
-                        h_cost = heuristic_power(neighbor, end_node, workspace, is_heuristic=True)  # heuristic cost
-                        punish = 0
-                        if neighbor.z <= 10:
-                            punish = (10 - neighbor.z) * 130
-                        a_cost = 1 * t_cost + 1 * h_cost + punish  # absolute cost
-                        # print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
+                if neighbor not in visited or t_cost < visited[neighbor]:
+                    visited[neighbor] = t_cost
+                    predecessor[neighbor] = current
+                    h_cost = heuristic_power(neighbor, end_node, workspace, is_heuristic=True)  # heuristic cost
+                    punish = 0
+                    if neighbor.z <= 10:
+                        punish = (10 - neighbor.z) * 130
+                    a_cost = 1 * t_cost + 1 * h_cost + punish  # absolute cost
+                    # print(f"t_cost: {t_cost}, h_cost: {h_cost}, a_cost: {a_cost}, x: {neighbor.x}, y: {neighbor.y}, z: {neighbor.z}")
 
-                        heapq.heappush(pq, (a_cost, neighbor))  # absolute cost is used for pq
-                        # pq_count += 1
-                        # print('Priority Queue Count: ', pq_count)
+                    heapq.heappush(pq, (a_cost, neighbor))  # absolute cost is used for pq
+                    # pq_count += 1
+                    # print('Priority Queue Count: ', pq_count)
         except Exception as e:
             raise IOError(f'An error ocurred: {e}')
 
