@@ -22,7 +22,8 @@ def hp_to_csv(score, rmse_targets, mae_targets, pa_targets, rmse_power, mae_powe
 
     # Add the new entry
     param_values = [value if value is not None else "None" for value in params.values()]
-    new_entry = [score] + [rmse_targets] + [mae_targets] + [pa_targets] + [rmse_power] + [mae_power] + [pa_power] + param_values + [username] + [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+    new_entry = [score] + [rmse_targets] + [mae_targets] + [pa_targets] + [rmse_power] + [mae_power] + [
+        pa_power] + param_values + [username] + [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
     existing_entries.append(new_entry)
 
     # Sort the entries by score
@@ -31,6 +32,7 @@ def hp_to_csv(score, rmse_targets, mae_targets, pa_targets, rmse_power, mae_powe
     # Write the sorted entries back to the CSV file
     with open(file, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['score', 'rmse_targets', 'mae_targets', 'pa_targets', 'rmse_power', 'mae_power', 'pa_power', 'criterion', 'max_depth', 'max_features', 'max_leaf_nodes', 'username', 'date'])
+        writer.writerow(
+            ['score', 'rmse_targets', 'mae_targets', 'pa_targets', 'rmse_power', 'mae_power', 'pa_power', 'criterion',
+             'max_depth', 'max_features', 'max_leaf_nodes', 'username', 'date'])
         writer.writerows(sorted_entries)
-

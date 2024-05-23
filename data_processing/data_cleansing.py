@@ -1,5 +1,4 @@
 import os
-
 import pandas as pd
 import requests
 from machine_learning.pre_processing import load_data
