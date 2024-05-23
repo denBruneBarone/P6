@@ -86,6 +86,8 @@ class Workspace:
                 ax.plot(segment_x_coords, segment_y_coords, segment_z_coords, color=segment_color, alpha=0.5)
             elif dimension == '2D':
                 ax.plot(segment_x_coords, segment_y_coords, color=segment_color, alpha=0.5)
+            elif dimension == 'XZ':
+                ax.plot(segment_x_coords, segment_z_coords, color=segment_color, alpha=0.5)
 
         # Plot flight paths
         for flight_path in self.flight_paths:
