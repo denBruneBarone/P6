@@ -166,7 +166,7 @@ class Workspace:
         elif dimension == 'XZ':
             fig, ax = plt.subplots(dpi=dpi)
 
-            # Plot blockages
+            # Plot blockages and flight_path
             ax = self.plot_blockages(ax, dimension='XZ')
             ax = self.plot_flight_paths(ax, dimension='XZ')
 
