@@ -27,7 +27,7 @@ def setup_workspace(mission):
     space.add_blockage(blockage_matrix_6)
     blockage_matrix_7 = Blockage(100, 35, 10, 110, 310, 0, 'obstacle')
     space.add_blockage(blockage_matrix_7)
-    space.set_wind(wind_speed=10, wind_angle=90)
+    space.set_wind(wind_speed=0, wind_angle=270)
     return space
 
 
