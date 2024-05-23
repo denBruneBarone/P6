@@ -111,14 +111,19 @@ def set_axis_velocity(current_node, next_node, mission):
 
 
 def calculate_time(current_node, next_node, mission, is_heuristic):
+    # Initialize a list to store time calculations for each axis
     time_axes = []
 
+    # If not using heuristic, set the velocity for each axis based on the mission details
     if not is_heuristic:
         set_axis_velocity(current_node, next_node, mission)
 
+    # Loop over each axis ('x', 'y', 'z') to calculate the time required to travel the distance
     for axis in ['x', 'y', 'z']:
+        # Calculate the distance to travel along the current axis
         dist = abs(getattr(next_node, axis) - getattr(current_node, axis))
 
+        # Determine the velocities for the current axis based on whether heuristic is used
         if is_heuristic:
             if axis != 'z':
                 velocity_current_axis = MAX_VELOCITY
@@ -129,39 +134,49 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
             velocity_current_axis = getattr(current_node, 'velocity_' + axis)
             velocity_next_axis = getattr(next_node, 'velocity_' + axis)
 
+        # Initialize time variables for acceleration and constant velocity phases
         t1 = 0  # time of acceleration
         t2 = 0  # time of constant velocity
 
+        # Set acceleration rate based on the axis
         if axis != 'z':
             a = 5
         else:
             a = 1
 
+        # Case where both initial and final velocities are zero, no movement
         if velocity_current_axis == 0 and velocity_next_axis == 0:
             pass
-
-        # flyv og så deaccelerer bagefter
-        elif velocity_next_axis != 0:
-            t1 = abs((velocity_next_axis - velocity_current_axis) / a)
-            if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
-                t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
-                      / abs(velocity_next_axis))
-
-        # accelerer og så flyv
         else:
             t1 = abs((velocity_next_axis - velocity_current_axis) / a)
-            if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
-                t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
-                      / abs(velocity_current_axis))
-        time = t1 + t2
+            remaining_dist = t1 * abs((velocity_next_axis + velocity_current_axis)) / 2
 
-        if time < 0:
+            # Case where there's a final velocity (deceleration phase)
+            if velocity_next_axis != 0:
+                if dist != remaining_dist:
+                    t2 = ((dist - remaining_dist) / abs(velocity_next_axis))
+
+            # Case where there's only an initial velocity (acceleration phase)
+            else:
+                if dist != remaining_dist:
+                    t2 = ((dist - remaining_dist) / abs(velocity_current_axis))
+
+        # Total time is the sum of acceleration and constant velocity times
+        total_time = t1 + t2
+
+        # Check for negative time values which are not possible
+        if total_time < 0:
             raise ValueError(f"Time is negative for axis {axis} in nodes {current_node} & {next_node}")
-        time_axes.append(time)
+        # Append calculated time for the current axis to the list
+        time_axes.append(total_time)
 
+    # Determine the maximum time required from all axes
     max_time = max(time_axes)
+    # Ensure the maximum time is not zero to avoid logical errors
     if max_time == 0:
         raise ValueError(f'max_time is 0! for nodes {current_node} & {next_node}')
+
+    # Return the maximum time required among all axes
     return max_time
 
 
@@ -178,6 +193,7 @@ def calculate_path_power(path, workspace):
             power += heuristic_power(previous_node, node, workspace)
         previous_node = node
     return power
+
 
 def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
     if current_node == next_node:
@@ -311,7 +327,8 @@ def get_neighbors_optimal_path(node, workspace):
             new_node = Node(new_x, new_y, new_z)
             if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                       [node.z, new_z],
-                                                                      workspace.blockages) is False and is_within_bounds(workspace, new_node) and new_z > 0:
+                                                                      workspace.blockages) is False and is_within_bounds(
+                workspace, new_node) and new_z > 0:
                 neighbors.append(new_node)
     return neighbors
 
