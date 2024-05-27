@@ -111,14 +111,19 @@ def set_axis_velocity(current_node, next_node, mission):
 
 
 def calculate_time(current_node, next_node, mission, is_heuristic):
+    # Initialize a list to store time calculations for each axis
     time_axes = []
 
+    # If not using heuristic, set the velocity for each axis based on the mission details
     if not is_heuristic:
         set_axis_velocity(current_node, next_node, mission)
 
+    # Loop over each axis ('x', 'y', 'z') to calculate the time required to travel the distance
     for axis in ['x', 'y', 'z']:
+        # Calculate the distance to travel along the current axis
         dist = abs(getattr(next_node, axis) - getattr(current_node, axis))
 
+        # Determine the velocities for the current axis based on whether heuristic is used
         if is_heuristic:
             if axis != 'z':
                 velocity_current_axis = MAX_VELOCITY
@@ -129,98 +134,113 @@ def calculate_time(current_node, next_node, mission, is_heuristic):
             velocity_current_axis = getattr(current_node, 'velocity_' + axis)
             velocity_next_axis = getattr(next_node, 'velocity_' + axis)
 
+        # Initialize time variables for acceleration and constant velocity phases
         t1 = 0  # time of acceleration
         t2 = 0  # time of constant velocity
 
+        # Set acceleration rate based on the axis
         if axis != 'z':
             a = 5
         else:
             a = 1
 
+        # Case where both initial and final velocities are zero, no movement
         if velocity_current_axis == 0 and velocity_next_axis == 0:
             pass
-
-        # flyv og så deaccelerer bagefter
-        elif velocity_next_axis != 0:
-            t1 = abs((velocity_next_axis - velocity_current_axis) / a)
-            if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
-                t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
-                      / abs(velocity_next_axis))
-
-        # accelerer og så flyv
         else:
             t1 = abs((velocity_next_axis - velocity_current_axis) / a)
-            if dist != t1 * abs((velocity_next_axis + velocity_current_axis)) / 2:
-                t2 = ((dist - t1 * abs((velocity_next_axis + velocity_current_axis)) / 2)
-                      / abs(velocity_current_axis))
-        time = t1 + t2
+            remaining_dist = t1 * abs((velocity_next_axis + velocity_current_axis)) / 2
 
-        if time < 0:
+            # Case where there's a final velocity (deceleration phase)
+            if velocity_next_axis != 0:
+                if dist != remaining_dist:
+                    t2 = ((dist - remaining_dist) / abs(velocity_next_axis))
+
+            # Case where there's only an initial velocity (acceleration phase)
+            else:
+                if dist != remaining_dist:
+                    t2 = ((dist - remaining_dist) / abs(velocity_current_axis))
+
+        # Total time is the sum of acceleration and constant velocity times
+        total_time = t1 + t2
+
+        # Check for negative time values which are not possible
+        if total_time < 0:
             raise ValueError(f"Time is negative for axis {axis} in nodes {current_node} & {next_node}")
-        time_axes.append(time)
+        # Append calculated time for the current axis to the list
+        time_axes.append(total_time)
 
+    # Determine the maximum time required from all axes
     max_time = max(time_axes)
+    # Ensure the maximum time is not zero to avoid logical errors
     if max_time == 0:
         raise ValueError(f'max_time is 0! for nodes {current_node} & {next_node}')
+
+    # Return the maximum time required among all axes
     return max_time
 
 
-def calculate_path_power(path, workspace):
+def calculate_path_energy(path, workspace):
     mission = workspace.mission
-    power = 0
+    energy = 0
     previous_node = None
     end_node = mission.end
     for node in path:
         # Power is calculated for each node.
         if previous_node is not None and node != end_node:
-            power += heuristic_power(previous_node, node, workspace)
+            energy += heuristic_energy(previous_node, node, workspace)
         elif node == end_node:
-            power += heuristic_power(previous_node, node, workspace)
+            energy += heuristic_energy(previous_node, node, workspace)
         previous_node = node
-    return power
+    return energy
 
-def heuristic_power(current_node, next_node, workspace, is_heuristic=False):
-    if current_node == next_node:
-        return 0
 
-    mission = workspace.mission
+def heuristic_energy(current_node, next_node, workspace, is_heuristic=False):
+    power_joule = 0
+    try:
+        if current_node == next_node:
+            return power_joule
 
-    time = calculate_time(current_node, next_node, mission, is_heuristic)
-    wind_speed = workspace.wind_field[int(current_node.x), int(current_node.y), int(current_node.z)]
-    wind_angle = workspace.wind_angle
+        mission = workspace.mission
 
-    if current_node == mission.end:
-        return 0
+        time = calculate_time(current_node, next_node, mission, is_heuristic)
+        wind_speed = workspace.wind_field[int(current_node.x-1), int(current_node.y-1), int(current_node.z-1)]
+        wind_angle = workspace.wind_angle
 
-    if is_heuristic:
-        curr_velocity_x = MAX_VELOCITY
-        curr_velocity_y = MAX_VELOCITY
-        curr_velocity_z = MAX_VELOCITY_V
-        next_velocity_x = 0
-        next_velocity_y = 0
-        next_velocity_z = 0
-    else:
-        curr_velocity_x = current_node.velocity_x
-        curr_velocity_y = current_node.velocity_y
-        curr_velocity_z = current_node.velocity_z
-        next_velocity_x = next_node.velocity_x
-        next_velocity_y = next_node.velocity_y
-        next_velocity_z = next_node.velocity_z
+        if current_node == mission.end:
+            return 0
 
-    linear_acceleration_x = (next_velocity_x - curr_velocity_x) / time
-    linear_acceleration_y = (next_velocity_y - curr_velocity_y) / time
-    linear_acceleration_z = (next_velocity_z - curr_velocity_z) / time
+        if is_heuristic:
+            curr_velocity_x = MAX_VELOCITY
+            curr_velocity_y = MAX_VELOCITY
+            curr_velocity_z = MAX_VELOCITY_V
+            next_velocity_x = 0
+            next_velocity_y = 0
+            next_velocity_z = 0
+        else:
+            curr_velocity_x = current_node.velocity_x
+            curr_velocity_y = current_node.velocity_y
+            curr_velocity_z = current_node.velocity_z
+            next_velocity_x = next_node.velocity_x
+            next_velocity_y = next_node.velocity_y
+            next_velocity_z = next_node.velocity_z
 
-    input_array = [[time, wind_speed, wind_angle,
-                    next_node.x - current_node.x, next_node.y - current_node.y, next_node.z - current_node.z,
-                    curr_velocity_x, curr_velocity_y, curr_velocity_z,
-                    linear_acceleration_x, linear_acceleration_y, linear_acceleration_z,
-                    mission.payload]]
+        linear_acceleration_x = (next_velocity_x - curr_velocity_x) / time
+        linear_acceleration_y = (next_velocity_y - curr_velocity_y) / time
+        linear_acceleration_z = (next_velocity_z - curr_velocity_z) / time
 
-    target_labels = ml_model.predict(input_array)
-    power_watt = power(target_labels)
-    power_joule = power_watt * time
-    return power_joule
+        input_array = [[time, wind_speed, wind_angle,
+                        next_node.x - current_node.x, next_node.y - current_node.y, next_node.z - current_node.z,
+                        curr_velocity_x, curr_velocity_y, curr_velocity_z,
+                        linear_acceleration_x, linear_acceleration_y, linear_acceleration_z,
+                        mission.payload]]
+
+        target_labels = ml_model.predict(input_array)
+        power_watt = power(target_labels)
+        energy_joule = power_watt * time
+    except Exception as e:
+        raise IOError(f'An error ocurred: {e}')
+    return energy_joule
 
 
 def distance_h(node1, node2):
@@ -279,6 +299,7 @@ def get_neighbors_baseline_path(node, end_node):
         neighbors.append(end_node)
 
     else:
+        # Travel dist for nodes - each dist.i is a tuple of (x, y, z)
         for dist_x, dist_y, dist_z in directions:
             new_x = node.x + dist_x
             new_y = node.y + dist_y
@@ -311,7 +332,8 @@ def get_neighbors_optimal_path(node, workspace):
             new_node = Node(new_x, new_y, new_z)
             if collision_detection.check_segment_intersects_blockages([node.x, new_x], [node.y, new_y],
                                                                       [node.z, new_z],
-                                                                      workspace.blockages) is False and is_within_bounds(workspace, new_node) and new_z > 0:
+                                                                      workspace.blockages) is False and is_within_bounds(
+                workspace, new_node) and new_z > 0:
                 neighbors.append(new_node)
     return neighbors
 
@@ -342,6 +364,10 @@ def find_baseline_path(workspace):
             break
 
         for neighbor in get_neighbors_baseline_path(current, end_node):
+            # Check if the neighbor is within bounds before processing
+            if not is_within_bounds(workspace, neighbor):
+                continue
+
             # Calculate tentative distance through current node
             tentative_distance = visited[current] + distance_h(current, neighbor)
             # If the tentative distance is less than the recorded distance to the neighbor, update it
@@ -404,9 +430,9 @@ def find_baseline_path(workspace):
         path_coordinates = [(node.x, node.y, node.z) for node in baseline_path]
         print(path_coordinates)
 
-        power = calculate_path_power(baseline_path, workspace)
+        energy = calculate_path_energy(baseline_path, workspace)
 
-        return EnergyPath(path_coordinates, power, path_type='baseline')
+        return EnergyPath(path_coordinates, energy, path_type='baseline')
     else:
         raise NotImplementedError('The baseline path is too high for the workspace')
 
@@ -439,14 +465,14 @@ def find_optimal_path(workspace):
         try:
             for neighbor in get_neighbors_optimal_path(current, workspace):
                 c_cost = visited[current]  # current cost
-                n_cost = heuristic_power(current,  # neighbor cost
+                n_cost = heuristic_energy(current,  # neighbor cost
                                          neighbor, workspace)
                 t_cost = c_cost + n_cost  # Total cost = current + neighbor cost
 
                 if neighbor not in visited or t_cost < visited[neighbor]:
                     visited[neighbor] = t_cost
                     predecessor[neighbor] = current
-                    h_cost = heuristic_power(neighbor, end_node, workspace, is_heuristic=True)  # heuristic cost
+                    h_cost = heuristic_energy(neighbor, end_node, workspace, is_heuristic=True)  # heuristic cost
                     punish = 0
                     if neighbor.z <= 10:
                         punish = (10 - neighbor.z) * 130
@@ -469,7 +495,7 @@ def find_optimal_path(workspace):
 
     path_coordinates = [(node.x, node.y, node.z) for node in path]
     print(path_coordinates)
-    power = calculate_path_power(path, workspace)
+    power = calculate_path_energy(path, workspace)
 
     if power > a_cost:
         raise ValueError("power is larger than a_cost after deducting punishment")

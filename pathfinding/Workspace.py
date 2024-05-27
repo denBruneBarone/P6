@@ -86,6 +86,8 @@ class Workspace:
                 ax.plot(segment_x_coords, segment_y_coords, segment_z_coords, color=segment_color, alpha=0.5)
             elif dimension == '2D':
                 ax.plot(segment_x_coords, segment_y_coords, color=segment_color, alpha=0.5)
+            elif dimension == 'XZ':
+                ax.plot(segment_x_coords, segment_z_coords, color=segment_color, alpha=0.5)
 
         # Plot flight paths
         for flight_path in self.flight_paths:
@@ -164,7 +166,7 @@ class Workspace:
         elif dimension == 'XZ':
             fig, ax = plt.subplots(dpi=dpi)
 
-            # Plot blockages
+            # Plot blockages and flight_path
             ax = self.plot_blockages(ax, dimension='XZ')
             ax = self.plot_flight_paths(ax, dimension='XZ')
 
