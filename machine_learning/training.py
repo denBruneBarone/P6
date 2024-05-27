@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from sklearn.model_selection import KFold, GridSearchCV
 from sklearn.tree import DecisionTreeRegressor
@@ -90,6 +92,7 @@ def concat_1st_axis(list1, list2):
 
 
 def train_model(train_data, test_data, use_grid_search):
+    start_time = time.time()
     grid_search_results = None
     print("Training...")
 
@@ -127,6 +130,9 @@ def train_model(train_data, test_data, use_grid_search):
                                       random_state=42)
 
     model.fit(train_features_np, train_targets_np)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("time for training using grid search: ", elapsed_time)
     return evaluate_model(model, test_data, grid_search_results)
 
 
