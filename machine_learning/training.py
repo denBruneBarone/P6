@@ -152,8 +152,6 @@ def evaluate_model(model, test_data, grid_search_results=None, save_predictions_
     test_features, test_targets = extract_features_and_targets(test_dataset)
     test_features_np, test_targets_np = concat_1st_axis(test_features, test_targets)
 
-    model.fit(test_features_np, test_targets_np)
-
     test_predictions = model.predict(test_features_np)
 
     try:
