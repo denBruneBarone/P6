@@ -8,6 +8,10 @@ from machine_learning.logs.predictions_to_excel import predictions_to_excel
 from machine_learning.config import HPConfig, GridSearchConfig
 from sklearn.metrics import make_scorer, mean_squared_error, mean_absolute_error, r2_score
 from machine_learning.logs.hp_to_csv import hp_to_csv
+from six import StringIO
+from IPython.display import Image
+from sklearn.tree import export_graphviz
+import pydotplus
 
 
 def rmse(true, predicted):  # order of params important!
@@ -179,3 +183,12 @@ def evaluate_model(model, test_data, grid_search_results=None, save_predictions_
                   grid_search_results['params'])
 
     return model
+
+
+def visualize_model(model, graph_file_path):
+    dot_data = StringIO()
+    export_graphviz(model, out_file=dot_data, filled=True, rounded=True, special_characters=True)
+    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+    graph.write_png(graph_file_path)
+
+    return Image(graph.create_png())

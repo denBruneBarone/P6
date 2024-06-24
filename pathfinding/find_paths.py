@@ -242,6 +242,22 @@ def heuristic_energy(current_node, next_node, workspace, is_heuristic=False):
         raise IOError(f'An error ocurred: {e}')
     return energy_joule
 
+def check_model():
+    input_array = [[0, 1, 0,  # time, wind_speed, wind_angle
+                    0, 0, 5,  # postions
+                    0, 0, 1,  # velocities
+                    0, 0, 0,  # accelerations
+                    0  # payloads
+                    ]]
+
+    target_labels = ml_model.predict(input_array)
+    print(target_labels)
+
+    return target_labels
+
+check_model()
+
+
 
 def distance_h(node1, node2):
     dist_x = (node1.x - node2.x) ** 2
