@@ -204,7 +204,7 @@ def heuristic_energy(current_node, next_node, workspace, is_heuristic=False):
         mission = workspace.mission
 
         time = calculate_time(current_node, next_node, mission, is_heuristic)
-        wind_speed = workspace.wind_field[int(current_node.x-1), int(current_node.y-1), int(current_node.z-1)]
+        wind_speed = workspace.wind_field[int(current_node.x - 1), int(current_node.y - 1), int(current_node.z - 1)]
         wind_angle = workspace.wind_angle
 
         if current_node == mission.end:
@@ -241,22 +241,6 @@ def heuristic_energy(current_node, next_node, workspace, is_heuristic=False):
     except Exception as e:
         raise IOError(f'An error ocurred: {e}')
     return energy_joule
-
-def check_model():
-    input_array = [[0, 1, 0,  # time, wind_speed, wind_angle
-                    0, 0, 5,  # postions
-                    0, 0, 1,  # velocities
-                    0, 0, 0,  # accelerations
-                    0  # payloads
-                    ]]
-
-    target_labels = ml_model.predict(input_array)
-    print(target_labels)
-
-    return target_labels
-
-check_model()
-
 
 
 def distance_h(node1, node2):
@@ -482,7 +466,7 @@ def find_optimal_path(workspace):
             for neighbor in get_neighbors_optimal_path(current, workspace):
                 c_cost = visited[current]  # current cost
                 n_cost = heuristic_energy(current,  # neighbor cost
-                                         neighbor, workspace)
+                                          neighbor, workspace)
                 t_cost = c_cost + n_cost  # Total cost = current + neighbor cost
 
                 if neighbor not in visited or t_cost < visited[neighbor]:
