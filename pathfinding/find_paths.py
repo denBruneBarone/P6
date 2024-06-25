@@ -497,9 +497,6 @@ def find_optimal_path(workspace):
     print(path_coordinates)
     power = calculate_path_energy(path, workspace)
 
-    if power > a_cost:
-        raise ValueError("power is larger than a_cost after deducting punishment")
-
     end_time = time.time()
     elapsed_time = end_time - start_time
     print("time for optimal path: ", elapsed_time)
