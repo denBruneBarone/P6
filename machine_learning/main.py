@@ -2,13 +2,14 @@ import os
 import pickle
 from machine_learning.pre_processing import pre_process_and_split_data
 from machine_learning.prepare_for_training import format_data
-from machine_learning.training import train_model, evaluate_model
+from machine_learning.training import train_model, evaluate_model, visualize_model
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 flights_processed = os.path.join(PROJECT_ROOT, "data/datasets/rodrigues/flights_processed.csv")
 
 # Define the path for saving/loading the model
 MODEL_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/trained_model.pkl")
+GRAPH_FILE_PATH = os.path.join(PROJECT_ROOT, "machine_learning/model_file/decision_tree.png")
 
 
 def train():
@@ -26,6 +27,10 @@ def train():
         with open(MODEL_FILE_PATH, 'rb') as model_file:
             model = pickle.load(model_file)
         evaluate_model(model, test_data, save_predictions_in_excel=False)
+
+        # Visualize model
+        # visualize_model(model, GRAPH_FILE_PATH)
+
     else:
         model = train_model(train_data, test_data, use_grid_search=True)
 

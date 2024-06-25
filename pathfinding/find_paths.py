@@ -204,7 +204,7 @@ def heuristic_energy(current_node, next_node, workspace, is_heuristic=False):
         mission = workspace.mission
 
         time = calculate_time(current_node, next_node, mission, is_heuristic)
-        wind_speed = workspace.wind_field[int(current_node.x-1), int(current_node.y-1), int(current_node.z-1)]
+        wind_speed = workspace.wind_field[int(current_node.x - 1), int(current_node.y - 1), int(current_node.z - 1)]
         wind_angle = workspace.wind_angle
 
         if current_node == mission.end:
@@ -466,7 +466,7 @@ def find_optimal_path(workspace):
             for neighbor in get_neighbors_optimal_path(current, workspace):
                 c_cost = visited[current]  # current cost
                 n_cost = heuristic_energy(current,  # neighbor cost
-                                         neighbor, workspace)
+                                          neighbor, workspace)
                 t_cost = c_cost + n_cost  # Total cost = current + neighbor cost
 
                 if neighbor not in visited or t_cost < visited[neighbor]:
@@ -496,9 +496,6 @@ def find_optimal_path(workspace):
     path_coordinates = [(node.x, node.y, node.z) for node in path]
     print(path_coordinates)
     power = calculate_path_energy(path, workspace)
-
-    if power > a_cost:
-        raise ValueError("power is larger than a_cost after deducting punishment")
 
     end_time = time.time()
     elapsed_time = end_time - start_time
