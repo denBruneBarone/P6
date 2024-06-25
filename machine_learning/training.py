@@ -11,7 +11,7 @@ from machine_learning.logs.hp_to_csv import hp_to_csv
 from six import StringIO
 from IPython.display import Image
 from sklearn.tree import export_graphviz
-import pydotplus
+# import pydotplus
 
 
 def rmse(true, predicted):  # order of params important!
